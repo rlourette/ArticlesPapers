@@ -1,5 +1,3 @@
-I'll make the suggested enhancements and update the code style to use the preferred brace placement. Here's the enhanced document:
-
 # Functional Safety Standards Hierarchy and Modern C++ Support for ProfiSafe Implementation
 
 **A Technical White Paper**
