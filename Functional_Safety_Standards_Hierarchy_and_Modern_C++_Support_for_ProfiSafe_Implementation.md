@@ -1121,7 +1121,7 @@ The intersection of functional safety requirements and modern C++ capabilities r
 
 **About the Author**
 
-Richard Lourette is a senior embedded systems architect with over 30 years of experience in safety-critical systems development, spanning consumer electronics, aerospace, and industrial automation. As President & CTO of RL Tech Solutions LLC, he provides embedded software consulting for cutting-edge GNSS receivers and spacecraft payload systems. Richard holds over 20 US and foreign patents and has held DoD security clearances for sensitive aerospace projects. He is actively seeking new opportunities in embedded systems development and safety-critical applications.
+Richard Lourette is a senior embedded systems architect with over 30 years of experience in robust embedded systems development, spanning consumer electronics, aerospace, and industrial automation. As President & CTO of RL Tech Solutions LLC, he provides embedded software consulting for cutting-edge GNSS receivers and spacecraft payload systems. Richard holds over 20 US and foreign patents and has held DoD security clearances for sensitive aerospace projects. He is actively seeking new opportunities in embedded systems development and safety-critical applications.
 
 *Contact: https://www.linkedin.com/in/richard-lourette-8569b3/ | rlourette@gmail.com*
 
