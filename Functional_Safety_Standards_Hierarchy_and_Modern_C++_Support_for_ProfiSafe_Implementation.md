@@ -271,28 +271,32 @@ enum class TelegramType
 // IEC 61508-3 Table A.3: "Formal methods" and "Semi-formal methods" for SIL 3
 // ProfiSafe Standard 4.2.1: "Safety state machine with fail-safe transitions"
 SafetyState process_safety_telegram(SafetyState current_state, 
-                                   const TelegramType& telegram) 
+                                    const TelegramType& telegram) 
 {
     // Note: Using proposed C++26 pattern matching syntax (P1371)
     // Actual syntax may differ in final standard
+
+    // clang-format off
     return inspect (current_state, telegram) 
     {
-        [SafetyState::RUN, TelegramType::SAFETY_REQUEST] => validate_and_continue();
-        [SafetyState::RUN, TelegramType::ERROR] => transition_to_failsafe();
-        [SafetyState::STOP, TelegramType::SAFETY_REQUEST] => remain_in_stop();
-        [SafetyState::OPERATE, TelegramType::DIAGNOSIS] => process_diagnosis();
-        [SafetyState::FAILSAFE, _] => remain_failsafe();  // ProfiSafe 4.2.3: "Fail-safe state retention"
+        [SafetyState::RUN     , TelegramType::SAFETY_REQUEST ] => validate_and_continue();
+        [SafetyState::RUN     , TelegramType::ERROR          ] => transition_to_failsafe();
+        [SafetyState::STOP    , TelegramType::SAFETY_REQUEST ] => remain_in_stop();
+        [SafetyState::OPERATE , TelegramType::DIAGNOSIS      ] => process_diagnosis();
+        [SafetyState::FAILSAFE, _                            ] => remain_failsafe();  // ProfiSafe 4.2.3: "Fail-safe state retention"
+
         // Additional required transitions for exhaustive coverage
-        [SafetyState::STOP, TelegramType::SAFETY_RESPONSE] => remain_in_stop();
-        [SafetyState::STOP, TelegramType::DIAGNOSIS] => process_diagnosis_in_stop();
-        [SafetyState::STOP, TelegramType::ERROR] => remain_in_stop();
-        [SafetyState::OPERATE, TelegramType::SAFETY_REQUEST] => process_operate_request();
-        [SafetyState::OPERATE, TelegramType::SAFETY_RESPONSE] => process_operate_response();
-        [SafetyState::OPERATE, TelegramType::ERROR] => transition_to_failsafe();
-        [SafetyState::RUN, TelegramType::SAFETY_RESPONSE] => process_run_response();
-        [SafetyState::RUN, TelegramType::DIAGNOSIS] => process_diagnosis_in_run();
+        [SafetyState::STOP    , TelegramType::SAFETY_RESPONSE] => remain_in_stop();
+        [SafetyState::STOP    , TelegramType::DIAGNOSIS      ] => process_diagnosis_in_stop();
+        [SafetyState::STOP    , TelegramType::ERROR          ] => remain_in_stop();
+        [SafetyState::OPERATE , TelegramType::SAFETY_REQUEST ] => process_operate_request();
+        [SafetyState::OPERATE , TelegramType::SAFETY_RESPONSE] => process_operate_response();
+        [SafetyState::OPERATE , TelegramType::ERROR          ] => transition_to_failsafe();
+        [SafetyState::RUN     , TelegramType::SAFETY_RESPONSE] => process_run_response();
+        [SafetyState::RUN     , TelegramType::DIAGNOSIS      ] => process_diagnosis_in_run();
         // Compiler enforces exhaustive pattern coverage per IEC 61508-3 Table A.4
     };
+    // clang-format on
 }
 
 // Alternative implementation using current C++ (pre-C++26)
@@ -538,21 +542,19 @@ public:
     SafetyState process_telegram(ChannelId id, const SafetyTelegram<N>& telegram) 
     {
         auto& channel = get_channel(id);
-        
+
         // Extract telegram type from data (implementation-specific)
         TelegramType telegram_type = extract_telegram_type(telegram);
-        
+
+        // clang-format off
         return inspect (channel.state, telegram_type) 
         {
-            [SafetyState::OPERATE, TelegramType::SAFETY_DATA] =>
-                process_safety_data(channel, telegram);
-            [SafetyState::OPERATE, TelegramType::DIAGNOSIS] =>
-                process_diagnosis(channel, telegram);
-            [_, TelegramType::ERROR] =>
-                transition_to_failsafe(channel);
-            [SafetyState::FAILSAFE, _] =>
-                SafetyState::FAILSAFE;  // ProfiSafe 4.2.3: "Remain in safe state"
+            [SafetyState::OPERATE , TelegramType::SAFETY_DATA] => process_safety_data(channel, telegram);
+            [SafetyState::OPERATE , TelegramType::DIAGNOSIS  ] => process_diagnosis(channel, telegram);
+            [ _                   , TelegramType::ERROR      ] => transition_to_failsafe(channel);
+            [SafetyState::FAILSAFE, _                        ] => SafetyState::FAILSAFE;  // ProfiSafe 4.2.3: "Remain in safe state"
         };
+        // clang-format on
     }
     
     // Compile-time memory usage calculation for certification
@@ -564,10 +566,10 @@ public:
     
 private:
     SafetyChannel& get_channel(ChannelId id);
-    TelegramType extract_telegram_type(const auto& telegram);
-    SafetyState process_safety_data(SafetyChannel& channel, const auto& telegram);
-    SafetyState process_diagnosis(SafetyChannel& channel, const auto& telegram);
-    SafetyState transition_to_failsafe(SafetyChannel& channel);
+    TelegramType   extract_telegram_type(const auto& telegram);
+    SafetyState    process_safety_data(SafetyChannel& channel, const auto& telegram);
+    SafetyState    process_diagnosis(SafetyChannel& channel, const auto& telegram);
+    SafetyState    transition_to_failsafe(SafetyChannel& channel);
 };
 
 }  // namespace profisafe
@@ -1365,8 +1367,8 @@ namespace migration {
     struct LegacyTelegram 
     {
         uint16_t consecutive_number;  // Same as modern
-        uint32_t crc32;              // Same as modern
-        uint8_t data[244];           // Same as modern
+        uint32_t crc32;               // Same as modern
+        uint8_t  data[244];           // Same as modern
     };
     
     // Compatibility layer for existing code
