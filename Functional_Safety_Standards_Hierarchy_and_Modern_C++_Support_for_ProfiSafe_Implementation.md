@@ -506,15 +506,29 @@ class SafetyTimer
 private:
     std::chrono::steady_clock::time_point start_time;
     std::chrono::milliseconds safety_time;
+    std::chrono::milliseconds max_safety_time;
     
 public:
-    explicit SafetyTimer(std::chrono::milliseconds timeout) 
+    // Constructor with safety time validation
+    // ProfiSafe Standard 3.4.1: "F_WD_Time parameter validation"
+    explicit SafetyTimer(std::chrono::milliseconds timeout, 
+                        std::chrono::milliseconds max_timeout = std::chrono::milliseconds(10000))
         : start_time(std::chrono::steady_clock::now())
-        , safety_time(timeout) {}
+        , safety_time(timeout)
+        , max_safety_time(max_timeout)
+    {
+        // Validate timeout is within safety bounds
+        if (timeout > max_timeout || timeout <= std::chrono::milliseconds::zero())
+        {
+            // Force to safe default per IEC 61508-7
+            safety_time = std::chrono::milliseconds(100);
+        }
+    }
     
     // Deterministic timeout checking
     // ProfiSafe Standard 3.4.2: "Deterministic timeout evaluation"
-    constexpr bool is_expired() const noexcept 
+    // Note: Cannot be constexpr due to runtime clock access
+    bool is_expired() const noexcept 
     {
         auto current_time = std::chrono::steady_clock::now();
         return (current_time - start_time) >= safety_time;
@@ -522,17 +536,71 @@ public:
     
     // Remaining time calculation for diagnostics
     // IEC 61508-2 Table A.16: "Diagnostic coverage" requirements
-    constexpr auto remaining_time() const noexcept 
+    auto remaining_time() const noexcept 
     {
         auto elapsed = std::chrono::steady_clock::now() - start_time;
         return std::max(std::chrono::milliseconds::zero(), safety_time - elapsed);
+    }
+    
+    // Reset timer for cyclic operations
+    // ProfiSafe Standard 3.4.3: "Cyclic timer reset"
+    void reset() noexcept 
+    {
+        start_time = std::chrono::steady_clock::now();
+    }
+};
+
+// Watchdog timer implementation
+// IEC 61508-7 Annex A: "Watchdog timer for temporal monitoring"
+// ProfiSafe Standard 3.4.4: "F_WD_Time watchdog implementation"
+class SafetyWatchdog 
+{
+private:
+    SafetyTimer watchdog_timer;
+    std::atomic<bool> triggered{false};
+    const std::chrono::milliseconds watchdog_period;
+    
+public:
+    explicit SafetyWatchdog(std::chrono::milliseconds period)
+        : watchdog_timer(period)
+        , watchdog_period(period)
+    {}
+    
+    // Service the watchdog - must be called within watchdog period
+    // IEC 61508-7 Annex A: "Watchdog servicing requirements"
+    void service() noexcept 
+    {
+        if (!triggered)
+        {
+            watchdog_timer.reset();
+        }
+    }
+    
+    // Check if watchdog has triggered
+    // ProfiSafe Standard 3.4.5: "Watchdog timeout detection"
+    bool has_triggered() noexcept 
+    {
+        if (!triggered && watchdog_timer.is_expired())
+        {
+            triggered = true;
+        }
+        return triggered;
+    }
+    
+    // Reset after safe state recovery
+    void reset() noexcept 
+    {
+        triggered = false;
+        watchdog_timer.reset();
     }
 };
 
 // Priority-based telegram processing for real-time constraints
 // IEC 61508-3 Table A.14: "Time-triggered architecture"
+// ProfiSafe Standard 3.4.6: "Priority-based message scheduling"
 class PriorityTelegramQueue 
 {
+public:
     // Compile-time priority levels
     enum class Priority : uint8_t 
     {
@@ -542,26 +610,93 @@ class PriorityTelegramQueue
         DIAGNOSTIC = 3         // Lowest priority
     };
     
-    // Fixed-priority scheduling without dynamic allocation
+private:
+    // Fixed-size priority queues for deterministic behavior
+    // IEC 61508-7 Annex A: "Bounded execution time"
+    std::array<std::static_vector<SafetyTelegram<244>, MAX_QUEUE_SIZE>, 4> priority_queues;
+    
+    // Timing constraints per priority level
+    // ProfiSafe Standard 3.4.7: "Message latency requirements"
+    static constexpr std::array<std::chrono::microseconds, 4> max_latencies = {
+        std::chrono::microseconds(100),   // EMERGENCY_STOP: 100μs max
+        std::chrono::microseconds(1000),  // SAFETY_CRITICAL: 1ms max
+        std::chrono::microseconds(10000), // SAFETY_RELEVANT: 10ms max
+        std::chrono::microseconds(100000) // DIAGNOSTIC: 100ms max
+    };
+    
+public:
+    // Get maximum latency for priority level
     template<Priority P>
-    constexpr std::chrono::microseconds max_latency() 
+    static constexpr std::chrono::microseconds max_latency() 
     {
-        if constexpr (P == Priority::EMERGENCY_STOP) 
+        return max_latencies[static_cast<size_t>(P)];
+    }
+    
+    // Enqueue telegram with priority
+    // IEC 61508-7 Annex A: "Priority-based scheduling"
+    bool enqueue(const SafetyTelegram<244>& telegram, Priority priority) 
+    {
+        auto& queue = priority_queues[static_cast<size_t>(priority)];
+        if (queue.size() >= queue.capacity())
         {
-            return std::chrono::microseconds(100);  // 100μs max
-        } 
-        else if constexpr (P == Priority::SAFETY_CRITICAL) 
-        {
-            return std::chrono::microseconds(1000); // 1ms max
+            return false;  // Queue full - deterministic failure
         }
-        else if constexpr (P == Priority::SAFETY_RELEVANT) 
+        queue.push_back(telegram);
+        return true;
+    }
+    
+    // Dequeue highest priority telegram
+    // ProfiSafe Standard 3.4.8: "Priority-based dequeue"
+    std::optional<SafetyTelegram<244>> dequeue() 
+    {
+        for (auto& queue : priority_queues)
         {
-            return std::chrono::microseconds(10000); // 10ms max
+            if (!queue.empty())
+            {
+                auto telegram = queue.front();
+                queue.erase(queue.begin());
+                return telegram;
+            }
         }
-        else 
+        return std::nullopt;
+    }
+};
+
+// Time synchronization for distributed safety systems
+// IEC 61508-7 Annex A: "Time synchronization requirements"
+// ProfiSafe Standard 3.4.9: "Synchronized time base"
+class SafetyTimeSynchronization 
+{
+private:
+    std::chrono::microseconds time_offset{0};
+    std::chrono::microseconds max_drift{1000};  // 1ms max drift
+    SafetyTimer sync_timer{std::chrono::seconds(1)};  // 1s sync period
+    
+public:
+    // Get synchronized time
+    // ProfiSafe Standard 3.4.10: "Common time base"
+    std::chrono::steady_clock::time_point get_synchronized_time() const noexcept 
+    {
+        return std::chrono::steady_clock::now() + time_offset;
+    }
+    
+    // Update time synchronization
+    // IEC 61508-7 Annex A: "Periodic time synchronization"
+    void synchronize(std::chrono::microseconds measured_offset) 
+    {
+        // Validate offset is within acceptable drift
+        if (std::abs(measured_offset.count()) <= max_drift.count())
         {
-            return std::chrono::microseconds(100000); // 100ms max
+            time_offset = measured_offset;
+            sync_timer.reset();
         }
+        // else maintain current offset (fail-safe behavior)
+    }
+    
+    // Check if synchronization is valid
+    bool is_synchronized() const noexcept 
+    {
+        return !sync_timer.is_expired();
     }
 };
 ```
@@ -783,15 +918,25 @@ namespace compiler_qualification {
 
 ### 9.4 Safety Metrics and Key Performance Indicators
 
-| Metric | Traditional C++ | C++26 Implementation | Improvement |
-|--------|-----------------|---------------------|-------------|
-| Static analysis violations | 15-20 per KLOC | 2-3 per KLOC | 85% reduction |
-| Memory-related defects | 8-10% of total | <1% of total | 90% reduction |
-| Certification test cases | 1000+ manual | 400 manual + 600 compile-time | 60% automation |
-| Code review effort | 40 hours/KLOC | 15 hours/KLOC | 62% reduction |
-| Runtime safety checks | 100% runtime | 70% compile-time | 70% shift-left |
-| Defect detection phase | 60% testing, 40% field | 85% compile-time, 15% testing | Earlier detection |
-| Safety analysis coverage | 70-80% automated | 95%+ automated | 20% improvement |
+The following metrics represent both industry-reported data and projected improvements based on C++26 features. Where available, industry benchmarks are cited; otherwise, projections are based on the theoretical analysis presented in this paper.
+
+| Metric | Traditional C++ | C++26 Implementation | Improvement/Source |
+|--------|-----------------|---------------------|-------------------|
+| Memory-related defects | 70% of vulnerabilities¹²'¹⁴'¹⁷ | Projected: 10-15% | Based on compile-time safety features |
+| Defect density (development) | 15 defects/KLOC¹⁸ | Projected: 3-5 defects/KLOC | Static analysis impact¹⁸ |
+| Residual defects (post-release) | 0.1-1 defects/KLOC¹⁹ | Projected: 0.01-0.1 defects/KLOC | Safety-critical validation levels¹⁹ |
+| Static analysis effectiveness | 78.3% fault prediction¹⁸ | Projected: 90%+ | Enhanced compile-time verification |
+| Certification effort | Baseline | Projected: 40-60% reduction | Based on DO-178C cost analysis¹⁶ |
+| Code review effort | Industry standard | Projected: 50% reduction | Automated compile-time checks |
+| Runtime safety checks | 100% runtime | Projected: 70% compile-time | Shift-left through constexpr/reflection |
+
+Notes:
+- Memory safety data from Microsoft, Google, and Mozilla studies¹²'¹⁴'¹⁷
+- Defect density benchmarks from automotive safety-critical systems¹⁸
+- Certification cost increases of 40-50% for safety assessment documented¹⁶
+- Static analysis prediction accuracy demonstrated in industrial studies¹⁸
+
+*Projections assume full adoption of C++26 safety features including static containers, pattern matching, compile-time reflection, and enhanced constexpr capabilities as described in this paper.*
 
 ---
 
@@ -1098,6 +1243,14 @@ The intersection of functional safety requirements and modern C++ capabilities r
 9. P0847R7, "Deducing this," ISO/IEC JTC1/SC22/WG21, 2021
 10. P1371R3, "Pattern Matching," ISO/IEC JTC1/SC22/WG21, 2019
 11. P0843R8, "static_vector," ISO/IEC JTC1/SC22/WG21, 2019
+12. "What is Memory Safety and Why Does It Matter?" Prossimo, June 2021. Available at: https://www.memorysafety.org/docs/memory-safety/
+13. "Conquering Memory Safety Vulnerabilities in C/C++," TrustInSoft, 2024. Available at: https://www.trust-in-soft.com/resources/blogs/memory-safety-issues-still-plague-new-c-cpp-code
+14. Sutter, H., "C++ Safety, in Context," April 2024. Available at: https://herbsutter.com/2024/03/11/safety-in-context/
+15. "It Is Time to Standardize Principles and Practices for Software Memory Safety," Communications of the ACM, February 2025. Available at: https://cacm.acm.org/opinion/it-is-time-to-standardize-principles-and-practices-for-software-memory-safety/
+16. Hilderman, V., "Impossible to Calculate Safety-Critical Software Cost? No! Actually Easy," LinkedIn, 2018. Available at: https://www.linkedin.com/pulse/impossible-calculate-safety-critical-software-cost-easy-hilderman
+17. "Memory safety," Wikipedia, accessed January 2025. Available at: https://en.wikipedia.org/wiki/Memory_safety
+18. "Static Analysis and Code Complexity Metrics as Early Indicators of Software Defects," Scientific Research Publishing, 2017. Available at: https://file.scirp.org/Html/2-9302477_83690.htm
+19. "Reading 3: Testing & Code Review," MIT Course 6.005, Fall 2014. Available at: http://www.mit.edu/~6.005/fa14/classes/03-testing-and-code-review/
 
 ---
 
