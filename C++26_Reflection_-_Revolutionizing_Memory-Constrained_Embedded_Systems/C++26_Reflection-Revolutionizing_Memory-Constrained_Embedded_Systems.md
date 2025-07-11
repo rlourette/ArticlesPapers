@@ -885,6 +885,7 @@ public:
 // Playback:      230 mW  (DRAM + display, no sensor)
 // 
 // Battery life improvement in MP3 mode: 9.1x
+```
 
 ## Part 11: Lessons Learned and C++26 Benefits
 
@@ -977,11 +978,6 @@ The reflection system generates exactly the code needed for each mode, with no w
 
 ### 6. **Maintenance**
 Adding new features becomes trivial. Define the subsystem, specify its requirements, and the framework handles everything else.
-
-## Part 12: Image Caption for MC3
-
-**Image Caption:**
-"C++26 reflection transforms the Kodak MC3's mode-based architecture: compile-time dependency injection automatically manages subsystems across MP3/camera/video modes, enabling 9x battery life improvement by eliminating DRAM power in MP3 mode."
 
 ## Conclusion: The Future of Power-Aware Embedded Systems
 
