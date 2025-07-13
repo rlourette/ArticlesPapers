@@ -5,7 +5,7 @@ This project holds my recent articles and white papers
 
 LICENSE - Copyright notice (not a software license)
 
-[Functional_Safety_Standards_Hierarchy_and_Modern_C++_Support_for_ProfiSafe_Implementation.md](Functional_Safety_Standards_Hierarchy_and_Modern_C++_Support_for_ProfiSafe_Implementation.md) - The full content
+[Functional_Safety_Standards_Hierarchy_and_Modern_C++_Support_for_ProfiSafe_Implementation.md](Functional_Safety_Standards_Hierarchy_and_Modern_C++_Support_for_ProfiSafe_Implementation.md) - A technical white paper examining how C++26 features can enhance ProfiSafe implementation while maintaining compliance with IEC 61508 and other functional safety standards.
 
 [C++26_Reflection-Revolutionizing_Memory-Constrained_Embedded_Systems.md](C++26_Reflection_-_Revolutionizing_Memory-Constrained_Embedded_Systems/C++26_Reflection-Revolutionizing_Memory-Constrained_Embedded_Systems.md) - C++26 Reflection article with lessons from the Kodak MC3 Digital Camera
 
