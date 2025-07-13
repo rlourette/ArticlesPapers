@@ -9,6 +9,8 @@ LICENSE - Copyright notice (not a software license)
 
 [C++26_Reflection-Revolutionizing_Memory-Constrained_Embedded_Systems.md](C++26_Reflection_-_Revolutionizing_Memory-Constrained_Embedded_Systems/C++26_Reflection-Revolutionizing_Memory-Constrained_Embedded_Systems.md) - C++26 Reflection article with lessons from the Kodak MC3 Digital Camera
 
+[How My Morning Coffee Reveals the Magic of GPS RTK Technology](Coffee_GPS_RTK_Article/coffee_gps_rtk_article.md) - A personal exploration of GPS RTK technology through the lens of autonomous lawn mowing, explaining how centimeter-level precision is achieved.
+
 Copyright © 2025 Richard Lourette. All rights reserved.
 
 This work may be reproduced, distributed, or transmitted in any form 
