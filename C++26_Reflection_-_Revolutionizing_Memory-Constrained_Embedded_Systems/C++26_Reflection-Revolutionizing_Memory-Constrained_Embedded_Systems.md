@@ -228,6 +228,8 @@ struct MemoryRequirement<PTPBufferPool>
 };
 
 // Union-based memory map builder that overlays mutually exclusive subsystems
+// For safety-critical systems, prefer compile-time validation over runtime checks
+// This ensures all validation happens before deployment
 template<typename... Subsystems>
 class UnionMemoryMapBuilder 
 {
@@ -440,7 +442,6 @@ This memory reduction is possible because:
 - Video mode uses VideoEncoder but never ImageProcessor or PTPBufferPool  
 - USB mode uses PTPBufferPool but never ImageProcessor or VideoEncoder
 - The union overlays these mutually exclusive subsystems in the same memory region
-```
 
 ## Part 4: Zero Dynamic Allocation Through Placement New and Static Memory Regions
 
@@ -653,6 +654,7 @@ private:
 //     
 //     return new(memory) ImageProcessor(sensor, mem_mgr, fs);  // Placement new with DI
 // }
+```
 
 ### Mode Switch Example: Camera to Video Mode
 ```cpp
@@ -677,7 +679,6 @@ void switch_camera_to_video_mode()
     
     // No malloc/free, no heap fragmentation, deterministic timing!
 }
-```
 ```
 
 The beauty of this approach is that all memory allocation happens at compile time through static arrays, while dependency injection remains fully functional. At runtime, we only use placement new to construct objects in their predetermined memory locations. When modes change, dependencies can be refreshed without reconstruction, or objects can be destroyed and recreated with new dependencies.
