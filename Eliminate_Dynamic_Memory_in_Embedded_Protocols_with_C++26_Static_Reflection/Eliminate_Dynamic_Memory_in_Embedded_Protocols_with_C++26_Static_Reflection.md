@@ -3,6 +3,8 @@
 *By Richard Lourette*  
 *Published: July 2025*
 
+![CoAP and C++26 illustration showing a modern poolside setting with CoAP protocol displayed on a large screen and C++26 text reflected in the water, representing the elegant combination of constrained application protocols with modern C++ reflection capabilities](CoAP_C++_reflection.png)
+
 ## Overview
 
 With the release of **C++26**, embedded developers have access to powerful compile-time capabilities like standardized **static reflection** (`std::meta`) and improved `consteval`/`constexpr` features. These advances unlock a new level of **safety, determinism, and clarity**, which is particularly useful in safety-critical systems where **dynamic memory is forbidden**.
@@ -498,7 +500,7 @@ The combination of **CoAP**, **DTLS**, and **C++26 static reflection** provides 
 
 ## About the Author
 
-**Richard Lourette** is a Principal Embedded Software Engineer and Architect specializing in embedded systems, safety-critical software, and modern C++ development. Connect with him on [LinkedIn](https://www.linkedin.com/in/richard-lourette-8569b3/) for more insights on embedded development and C++ innovations.
+**Richard Lourette** is a Principal Embedded Software Engineer and Architect specializing in embedded systems, highly reliable, safety-critical software, and modern C++ development. Connect with him on [LinkedIn](https://www.linkedin.com/in/richard-lourette-8569b3/) for more insights on embedded development and C++ innovations.
 
 ## Copyright & Usage
 
