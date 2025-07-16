@@ -3,7 +3,11 @@
 *By Richard Lourette*  
 *Published: July 2025*
 
-![CoAP and C++26 illustration showing a modern poolside setting with CoAP protocol displayed on a large screen and C++26 text reflected in the water, representing the elegant combination of constrained application protocols with modern C++ reflection capabilities](CoAP_C++_reflection.png)
+<figure>
+  <img src="CoAP_C++_reflection.png" alt="CoAP and C++26 illustration showing a modern poolside setting with CoAP protocol displayed on a large screen and C++26 text reflected in the water">
+  <figcaption><em>
+  <small>Image credit: Richard Lourette and DALL-E</small></figcaption>
+</figure>
 
 ## Overview
 
