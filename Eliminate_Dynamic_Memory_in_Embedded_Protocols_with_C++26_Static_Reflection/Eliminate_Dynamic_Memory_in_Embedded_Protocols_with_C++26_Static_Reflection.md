@@ -60,6 +60,18 @@ This implementation targets embedded systems with the following characteristics:
 - [ETL (Embedded Template Library)](https://www.etlcpp.com/) for static containers
 - C++26-compatible compiler (GCC 15+, Clang 19+ with reflection support)
 
+**Alternative Approaches for Current Development:**
+
+While waiting for C++26 reflection support, several preprocessor and code generation tools can achieve similar results:
+
+- **X-Macros**: Declarative message definitions with automatic serialization
+- **Protocol Buffers (nanopb)**: Generates C++ code from `.proto` files
+- **FlatBuffers**: Zero-copy serialization with code generation
+- **Custom Python/CMake generators**: Build-time code synthesis
+- **Boost.Describe**: Compile-time reflection for C++14/17/20
+
+*See the "Migration Path" section below for practical implementation examples.*
+
 **Key Constraints:**
 
 - No dynamic memory allocation
@@ -466,6 +478,102 @@ static_assert(security_policy_check<SecureSensorMessage>());
 ```
 
 This approach enables **defense-in-depth** at the language level, ensuring security policies are impossible to bypass or forget, while maintaining the zero-overhead principles essential for embedded systems.
+
+## Migration Path: Achieving Similar Results Today
+
+While C++26 static reflection represents the future, embedded developers can achieve similar benefits using current tools and techniques:
+
+### X-Macros for Message Definition
+
+```cpp
+// Define message fields once
+#define TEMPERATURE_REQUEST_FIELDS \
+    X(uint16_t, sensor_id) \
+    X(uint8_t, sampling_rate)
+
+#define TEMPERATURE_RESPONSE_FIELDS \
+    X(float, temperature_celsius) \
+    X(float, humidity_percent) \
+    X(uint64_t, timestamp_ms) \
+    X(uint8_t, battery_level)
+
+// Generate struct definitions
+#define X(type, name) type name;
+struct GetTemperatureRequest { TEMPERATURE_REQUEST_FIELDS };
+struct GetTemperatureResponse { TEMPERATURE_RESPONSE_FIELDS };
+#undef X
+
+// Generate serialization code
+template<> etl::vector<uint8_t, 64> serialize<GetTemperatureRequest>(const GetTemperatureRequest& msg) {
+    etl::vector<uint8_t, 64> buffer;
+#define X(type, name) serialize_field(buffer, msg.name);
+    TEMPERATURE_REQUEST_FIELDS
+#undef X
+    return buffer;
+}
+```
+
+### Protocol Buffers with nanopb
+
+```protobuf
+// temperature_sensor.proto
+syntax = "proto3";
+
+message GetTemperatureRequest {
+    uint32 sensor_id = 1;
+    uint32 sampling_rate = 2;
+}
+
+message GetTemperatureResponse {
+    float temperature_celsius = 1;
+    float humidity_percent = 2;
+    uint64 timestamp_ms = 3;
+    uint32 battery_level = 4;
+}
+```
+
+Generates optimized C code suitable for microcontrollers with static memory allocation.
+
+### Custom CMake Code Generation
+
+```cmake
+# Generate serialization code at build time
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/coap_messages.cpp
+    COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/generate_coap.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/messages.yaml
+            ${CMAKE_CURRENT_BINARY_DIR}/coap_messages.cpp
+    DEPENDS messages.yaml generate_coap.py
+)
+```
+
+### Boost.Describe for C++14/17/20
+
+```cpp
+#include <boost/describe.hpp>
+
+struct GetTemperatureRequest {
+    uint16_t sensor_id;
+    uint8_t sampling_rate;
+};
+
+BOOST_DESCRIBE_STRUCT(GetTemperatureRequest, (), (sensor_id, sampling_rate))
+
+template<typename T>
+constexpr auto serialize_described(const T& msg) {
+    etl::vector<uint8_t, 64> buffer;
+    boost::describe::for_each_member<T>([&](auto member_info) {
+        serialize_field(buffer, msg.*member_info.pointer);
+    });
+    return buffer;
+}
+```
+
+These approaches provide:
+- **Zero runtime overhead** like C++26 reflection
+- **Compile-time code generation** 
+- **Type safety** with minimal boilerplate
+- **STM32 compatibility** with current toolchains
 
 ## Conclusion
 
