@@ -490,7 +490,7 @@ The combination of **CoAP**, **DTLS**, and **C++26 static reflection** provides 
 
 - [RFC 7252 – Constrained Application Protocol (CoAP)](https://datatracker.ietf.org/doc/html/rfc7252)  
 - [RFC 9147 – Datagram Transport Layer Security (DTLS) 1.3](https://datatracker.ietf.org/doc/html/rfc9147)  
-- [C++26 Static Reflection — P2996R0](https://isocpp.org/files/papers/P2996R1.html)  
+- [C++26 Static Reflection — P2996R1](https://isocpp.org/files/papers/P2996R1.html)  
 - [ETL: Embedded Template Library](https://www.etlcpp.com/)  
 - [TinyDTLS GitHub](https://github.com/eclipse/tinydtls)  
 - [ISO 26262 – Functional Safety](https://www.iso.org/standard/68383.html)
