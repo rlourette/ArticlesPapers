@@ -401,6 +401,7 @@ using MC3MemoryMaps = UnionMemoryMapBuilder<
     // Union size: max(sizeof(ImageProcessor), sizeof(VideoEncoder), sizeof(PTPBufferPool))
     // Memory saved: sum - max (automatically calculated)
 >;
+```
 
 ### Memory Layout Analysis:
 **Without Union Optimization (Naive Approach):**
