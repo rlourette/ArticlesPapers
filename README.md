@@ -5,7 +5,7 @@ This project holds my recent articles and white papers
 
 LICENSE - Copyright notice (not a software license)
 
-[Using a NavCam for Autonomous Lunar Position Determination](In-Situ%20Lunar%20Navigation%20with%20NavCam/Using_a_NavCam_for_Autonomous_Lunar_Position_Determination.md.md) - A technical white paper detailing how lunar spacecraft can autonomously determine their position using navigation cameras and terrain-relative navigation techniques, including image registration, digital elevation models, and Extended Kalman Filtering.
+[Using a NavCam for Autonomous Lunar Position Determination](In-Situ%20Lunar%20Navigation%20with%20NavCam/Using_a_NavCam_for_Autonomous_Lunar_Position_Determination.md) - A technical white paper detailing how lunar spacecraft can autonomously determine their position using navigation cameras and terrain-relative navigation techniques, including image registration, digital elevation models, and Extended Kalman Filtering.
 
 [Eliminating Dynamic Memory in Embedded Protocols with C++26 Static Reflection: A CoAP Case Study](Eliminate_Dynamic_Memory_in_Embedded_Protocols_with_C++26_Static_Reflection/Eliminate_Dynamic_Memory_in_Embedded_Protocols_with_C++26_Static_Reflection.md) - A comprehensive technical article demonstrating how C++26's static reflection enables zero-allocation protocol implementation for embedded systems, using CoAP as a practical case study and featuring compile-time security policies, DTLS integration, and safety-critical compliance.
 
