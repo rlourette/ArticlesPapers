@@ -17,7 +17,7 @@ Since I have prior experience and insight into this topic, I decided to expand b
 
 As lunar missions expand in complexity, spacecraft must increasingly operate with autonomy. A spacecraft in lunar orbit, equipped with a star tracker, accurate orbital propagation, a high‑stability clock, a laser range finder, and a navigation camera (NavCam), can use its NavCam imagery to determine its position in the lunar frame of reference without constant ground support.
 
-This white paper outlines a detailed approach for using NavCam imagery combined with known lunar terrain models to estimate orbital position. It explains the purpose, benefits, and potential drawbacks of this method, and proposes an implementation pipeline. References are included so readers can explore technical topics in more depth.
+This white paper outlines a detailed approach for using NavCam imagery combined with known lunar terrain models and surface albedo data to estimate orbital position. It explains the purpose, benefits, and potential drawbacks of this method, and proposes an implementation pipeline. References are included so readers can explore technical topics in more depth.
 
 ---
 
@@ -115,20 +115,58 @@ The idea is to compare **what the camera actually sees** to **what it should see
 
 ---
 
-## 5. Recommended Implementation Pipeline
+## 5. Organizing DEM and Albedo Data for Efficient Retrieval
 
-1. **Capture NavCam frame** with star‑tracker attitude and laser range measurement.
-2. **Apply camera model calibration** (per‑pixel angles and boresight offset) and correct for optical distortion.
-3. **Preprocess image** (edge map or CLAHE) to normalize illumination.
-4. **Render synthetic view** from DEM and estimated position, using calibrated camera geometry and Sun vector.
-5. **Perform registration** (phase correlation or feature matching with ORB/BRISK) between NavCam image and synthetic view.
-6. **Compute pixel offset → ground offset** using per‑pixel angle and laser range.
-7. **Fuse offset with propagation in EKF** to update position.
-8. Repeat at regular intervals or when orbital drift exceeds threshold.
+Since this mission profile is focused on **polar operations** with only occasional updates near the equator, the DEM and albedo data can be organized in a way that minimizes storage and maximizes retrieval speed:
 
----
+- **Region‑focused tiling:** Pre‑tile only the north/south polar caps and an optional narrow equatorial strip.
+- **Projection:** Use a **polar stereographic projection** for each pole to reduce distortion and enable uniform tile sizes.
+- **Tile indexing:** Precompute tile tables mapping latitude/longitude regions to file offsets.
+- **Data separation:** Store DEM and albedo tiles separately but aligned to the same tile grid.
+- **GPU‑ready:** Upload tiles into texture arrays; build mipmaps on the GPU for performance (without compromising stored resolution).
+- **Retrieval margin:** Always fetch tiles covering ~2× the expected footprint area to handle pointing uncertainty.
+- **Caching and prefetch:** Orbit‑based prefetching with LRU caching keeps frequently used tiles ready in RAM.
 
-## 6. References & Further Reading
+These steps ensure that when a NavCam capture is about to occur, the correct high‑resolution DEM and albedo data are already staged and ready for the GPU rendering pipeline.
+
+### Data Flow Diagram
+
+Below is a flowchart summarizing the data flow from tile storage to GPU rendering and image registration:
+
+```mermaid
+flowchart TD
+    A[DEM Tiles] --> D["Prefetch Tiles (2x Footprint Area)"]
+    B[Albedo Tiles] --> D
+    C["Optional: Equatorial Strip"] --> D
+    E["Predict Footprint<br/>(Ephemeris, Attitude)"] --> F["Index Tiles<br/>(Tile Tables)"]
+    F --> D
+    D --> G["Upload to GPU<br/>(Texture Array)"]
+    G --> H["Render Synthetic Image"]
+    H --> I["Image Registration with NavCam Frame"]
+    I --> J["Position Update via EKF"]
+    K["Distortion LUT"] --> H
+    L[NavCam] --> I
+```
+
+## 6. Recommended Implementation Pipeline
+
+  1. Capture NavCam frame with star‑tracker attitude and laser range measurement.
+
+  1. Apply camera model calibration (per‑pixel angles and boresight offset) and correct for optical distortion.
+
+  1. Preprocess image (edge map or CLAHE) to normalize illumination.
+
+  1. Render synthetic view from DEM and estimated position, integrating calibrated camera geometry, Sun vector, and albedo data.
+
+  1. Perform registration (phase correlation or feature matching with ORB/BRISK) between NavCam image and synthetic view.
+
+  1. Compute pixel offset → ground offset using per‑pixel angle and laser range.
+
+  1. Fuse offset with propagation in EKF to update position.
+
+  1. Repeat at regular intervals or when orbital drift exceeds threshold.
+
+## 7. References & Further Reading
 
 - NASA LOLA Data for Lunar DEMs: [https://lunar.gsfc.nasa.gov/lola.html](https://lunar.gsfc.nasa.gov/lola.html)  
 - LROC Imagery Resources: [https://lroc.sese.asu.edu/](https://lroc.sese.asu.edu/)  
@@ -136,16 +174,6 @@ The idea is to compare **what the camera actually sees** to **what it should see
 - Extended Kalman Filters Overview: [https://en.wikipedia.org/wiki/Kalman_filter](https://en.wikipedia.org/wiki/Kalman_filter)  
 - ORB Detector: [https://docs.opencv.org/4.x/db/d95/classcv_1_1ORB.html](https://docs.opencv.org/4.x/db/d95/classcv_1_1ORB.html)  
 - BRISK Paper: [https://ieeexplore.ieee.org/document/6126544](https://ieeexplore.ieee.org/document/6126544)
-
----
-
-## 7. Conclusion
-
-The approach outlined above offers a practical and robust way for a lunar spacecraft to autonomously determine its position in the lunar frame of reference. By leveraging NavCam imagery, laser range data, high‑fidelity lunar terrain models, and well‑established image registration techniques, the spacecraft can achieve high accuracy without reliance on Earth‑based navigation aids.
-
-Careful integration of **optical distortion correction**, **boresight calibration**, and **per‑pixel geometry** ensures that each measured feature on the surface can be mapped precisely into the lunar frame.
-
----
 
 ## 8. Factors Driving Position Determination Accuracy
 
@@ -211,17 +239,21 @@ With high‑res DEMs, this budget can be driven down to sub‑meter.
 
 ## About the Author
 
-**Richard W. Lourette** is the founder and principal consultant at **RL Tech Solutions LLC**, where he provides high‑impact engineering leadership to aerospace and embedded systems programs.  
+Richard W. Lourette is the founder and principal consultant at RL Tech Solutions LLC, where he provides high‑impact engineering leadership to aerospace and embedded systems programs.
 
-Richard has decades of experience delivering mission‑critical systems for organizations including **Topcon Positioning Systems**, **L3Harris**, and **Panasonic Industrial IoT**. His work spans:
+Richard has decades of experience delivering mission‑critical systems for organizations including Topcon Positioning Systems, L3Harris, and Panasonic Industrial IoT. His work spans:
+
 - Advanced spacecraft payload design and integration,
+
 - Embedded C++/Python software architecture for GNSS and navigation,
+
 - AI‑powered test frameworks and systems validation,
+
 - High‑reliability electronics and FPGA‑based payloads aligned with NASA’s Core Flight System (cFS).
 
-Richard’s background includes authoring technical volumes that secured eight‑figure aerospace contracts, leading development teams through the full lifecycle of embedded and payload hardware/software, and contributing to groundbreaking positioning, navigation, and sensing technologies. He holds **20 U.S. patents** and has been trusted with **DoD Secret** and **SCI** clearances.
+Richard’s background includes authoring technical volumes that secured eight‑figure aerospace contracts, leading development teams through the full lifecycle of embedded and payload hardware/software, and contributing to groundbreaking positioning, navigation, and sensing technologies. He holds 20 U.S. patents and has been trusted with DoD Secret and SCI clearances.
 
-If you are seeking an experienced consultant to help architect, implement, or validate **lunar navigation, GNSS systems, embedded avionics, or aerospace payloads**, Richard brings a proven track record and hands‑on expertise to help your mission succeed.
+If you are seeking an experienced consultant to help architect, implement, or validate lunar navigation, GNSS systems, embedded avionics, or aerospace payloads, Richard brings a proven track record and hands‑on expertise to help your mission succeed.
 
-📧 **Contact:** rlourette[at]gmail[dot]com  
-🌐 **Location:** Fairport, New York, USA
+📧 Contact: rlourette[at]gmail[dot]com
+🌐 Location: Fairport, New York, USA
