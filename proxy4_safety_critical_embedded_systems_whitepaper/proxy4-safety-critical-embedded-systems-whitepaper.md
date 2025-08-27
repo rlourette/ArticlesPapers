@@ -4,6 +4,9 @@
 
 *A Technical White Paper for Embedded Systems Engineering Professionals*
 
+*By Richard Lourette · Originally Published August 26, 2025*
+
+
 **Author's Note**: *As an embedded systems engineer passionate about leveraging modern C++ in safety-critical applications, I've witnessed firsthand the challenges of implementing polymorphism in resource-constrained environments. The advent of Microsoft's Proxy 4 library represents a paradigm shift that addresses the fundamental tension between the expressive power of modern C++ and the stringent requirements of embedded systems—particularly those requiring certification under standards like DO-178C, ISO 26262, and IEC 62304. This white paper documents my exploration of how Proxy 4, especially when combined with complementary libraries like the Embedded Template Library (ETL), can transform how we approach object-oriented design in systems where every byte of memory, every CPU cycle, and every millisecond of execution time matters.*
 
 ---
@@ -52,7 +55,7 @@ Safety-critical systems operate under regulatory frameworks that dramatically in
 
 **IEC 62304 Medical Device Software Lifecycle**: Medical device software classified as Class C (life-supporting or life-sustaining) requires comprehensive software lifecycle processes similar to aviation standards. The emphasis on risk management and hazard analysis makes traditional polymorphism problematic because virtual functions create code paths that may not be fully analyzed during hazard identification [^9].
 
-**Certification Costs**: Industry data indicates safety-critical software development costs ranging from $100 to $1000 per line of code, depending on the criticality level and regulatory domain [^10]. These costs primarily stem from extensive documentation requirements, verification activities, and the need for independent validation. Any technology that reduces verification complexity directly translates to cost savings.
+**Certification Costs**: Industry data indicates safety-critical software development costs ranging from \$100 to \$1000 per line of code, depending on the criticality level and regulatory domain [^10]. These costs primarily stem from extensive documentation requirements, verification activities, and the need for independent validation. Any technology that reduces verification complexity directly translates to cost savings.
 
 ### 2.3 Traditional C++ Limitations
 
