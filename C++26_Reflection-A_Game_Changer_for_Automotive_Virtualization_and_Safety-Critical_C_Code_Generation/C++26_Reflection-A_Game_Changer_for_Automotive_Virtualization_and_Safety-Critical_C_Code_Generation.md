@@ -1,6 +1,6 @@
 # C++26 Reflection: Transforming Automotive Virtualization Through Compile-Time Code Generation
 
-**By Richard Lourette** | Oriiginally published August 27, 2025, revised August 28, 2025
+**By Richard Lourette** | Originally published August 27, 2025, revised August 28, 2025
 
 <center>
 
@@ -205,3 +205,5 @@ For consulting on lunar navigation, GNSS systems, embedded avionics, aerospace p
 ---
 Copyright © 2025 Richard W. Lourette. All rights reserved.  
 This work may be reproduced, distributed, or transmitted in any form or by any means with proper attribution to the author.
+
+---
