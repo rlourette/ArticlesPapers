@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Automotive C++26 Article Image Text Overlay Generator
-Optimized for placement in less busy areas of the image
 """
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -109,7 +108,7 @@ class ArticleImageGenerator:
         subtitle = "Automotive Code Generation"
         self.add_text_with_glow(subtitle, (40, 155), 'subtitle', 'light_blue')
         
-        # Key feature - bottom left, avoiding car area
+        # Key feature - bottom left
         self.add_dark_panel(20, self.height - 120, 320, 100, opacity=140)
         self.add_text_with_glow("FROM HIGH-LEVEL C++", (35, self.height - 105), 
                                 'accent', 'white')
@@ -118,7 +117,7 @@ class ArticleImageGenerator:
         self.add_text_with_glow("AT COMPILE TIME", (35, self.height - 45), 
                                 'accent', 'bright_cyan')
         
-        # Add vertical text on far left edge (less intrusive)
+        # Add vertical text on far left edge
         vertical_text_layer = Image.new('RGBA', self.img.size, (0, 0, 0, 0))
         vertical_draw = ImageDraw.Draw(vertical_text_layer)
         
@@ -132,12 +131,12 @@ class ArticleImageGenerator:
         
         self.img = Image.alpha_composite(self.img, vertical_text_layer)
         
-        # Bottom right corner tag (small, unobtrusive)
+        # Bottom right corner tag
         self.add_text_with_glow("DRAFT STANDARD 2025", 
                                 (self.width - 520, self.height - 25), 
                                 'small', 'semi_white')
         
-        # Top right performance metrics (avoiding existing UI)
+        # Top right performance metrics
         metrics_x = self.width - 280
         metrics_y = 30
         self.add_dark_panel(metrics_x - 10, metrics_y - 5, 270, 80, opacity=120)
