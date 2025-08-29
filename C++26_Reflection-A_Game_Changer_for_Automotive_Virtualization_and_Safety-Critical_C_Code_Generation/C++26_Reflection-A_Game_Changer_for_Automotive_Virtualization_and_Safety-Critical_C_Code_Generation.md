@@ -1,6 +1,6 @@
 # C++26 Reflection: Transforming Automotive Virtualization Through Compile-Time Code Generation
 
-**By Richard Lourette** | Published August 27, 2025
+**By Richard Lourette** | Oriiginally published August 27, 2025, revised August 28, 2025
 
 <center>
 
