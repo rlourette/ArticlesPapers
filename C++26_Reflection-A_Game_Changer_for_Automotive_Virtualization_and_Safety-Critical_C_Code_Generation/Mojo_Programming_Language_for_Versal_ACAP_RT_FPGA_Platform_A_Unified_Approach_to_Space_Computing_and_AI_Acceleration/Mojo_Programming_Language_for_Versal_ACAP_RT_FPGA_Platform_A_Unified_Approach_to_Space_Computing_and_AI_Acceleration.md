@@ -1,4 +1,8 @@
+
 # Mojo Programming Language for Versal ACAP RT FPGA Platform: A Unified Approach to Space Computing and AI Acceleration
+
+![alt text](Article_Image.jpg)
+<div align="center"><sub><em>Image credit: Richard Lourette and Grok</em></sub></div>
 
 ## Preface
 Having spent considerable time tracking the evolution of the Mojo programming language and recently completing the architecture of a spacecraft payload processing system utilizing Versal FPGAs alongside other processing elements, I've become increasingly intrigued by the potential convergence of these technologies. This white paper presents a hypothetical exploration: what if Mojo's innovative compiler infrastructure could target the Versal ACAP platform?
