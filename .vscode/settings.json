@@ -1,0 +1,6 @@
+{
+  "markdown-pdf.executablePath": "/snap/bin/chromium",
+  "markdown-pdf.launch_options": {
+    "args": ["--no-sandbox"]
+  }
+}
