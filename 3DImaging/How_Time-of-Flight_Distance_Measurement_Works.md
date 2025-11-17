@@ -136,3 +136,14 @@ Engineers solve these challenges using **modulation, gating, averaging, and clev
 ## Summary
 
 Time-of-Flight measurement is elegantly simple in principle but relies on precise timing, sensitive detectors, and clever electronics. From CMOS cameras in phones to SPAD arrays and MCPs in scientific instruments, ToF allows engineers and scientists to “see” the world in 3D, measure distances, and explore phenomena in ways that were impossible just a few decades ago.
+
+## About the Author
+
+Richard Lourette provides **embedded systems architecture** and **advanced imaging solutions for mission-critical technology projects**. He specializes in **modern C++ development for embedded systems**, **GNSS**, and **real-time imaging capture systems** spanning applications from **consumer electronics to aerospace**.
+
+With **30+ years of experience**, Richard has extensive expertise in **high-performance embedded programming**, **signal/image processing**, with **experience in safety-critical systems**. He is an author on over 20 US patents.
+
+Through **RL Tech Solutions LLC**, he consults on **real-time vision**, **autonomous systems**, and **resource-constrained architectures**, helping teams accelerate innovation while mitigating risk.
+
+📧 Contact: rlourette_at_gmail.com
+🌐 Location: Fairport, New York, USA
