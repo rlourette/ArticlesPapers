@@ -296,11 +296,11 @@ The C++ committee is actively working on features that benefit embedded developm
 
 ## Closing Thoughts
 
-If you're developing for reliability, safety, or energy efficiency, and you're using C++, don't accept the heap by default. It's not only possible but preferable to architect systems using modern C++ with no runtime allocation. This gives you the maintainability of modern idioms without compromising on deterministic behavior.
+If you're developing for **reliability**, **safety**, or **energy efficiency**, and you're using C++, don't accept the heap by default. It's not only possible but preferable to architect systems using **modern C++ with no runtime allocation**. This gives you the maintainability of modern idioms without compromising on deterministic behavior.
 
 The embedded landscape is evolving. With tools like ETL, C++23's `std::expected`, and careful architectural choices, we can write embedded software that is both modern and reliable. The key is understanding that constraints breed creativity: working without the heap forces us to write better, more predictable code.
 
-**Remember:** In embedded systems, predictability trumps flexibility. Every allocation is a potential point of failure. Design accordingly.
+**Remember:** In embedded systems, **predictability trumps flexibility**. Every allocation is a potential point of failure. Design accordingly.
 
 I'd love to hear from others building modern C++ embedded systems: Are you heap-free? What strategies have you employed to maintain determinism while leveraging modern C++ features? What challenges have you faced in convincing teams to adopt these practices?
 
