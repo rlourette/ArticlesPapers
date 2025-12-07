@@ -6,7 +6,7 @@
   <em>Image credit: Richard Lourette and Grok</em>
 </p>
 
-**Version 2.1 | December 2025**
+**Version 2.2 | December 2025**
 
 **Author:** Richard W. Lourette  
 **Contact:** rlourette_at_gmail.com  
@@ -29,7 +29,7 @@ This distinction matters: the P1 Tags feature becomes even more valuable when ex
 
 ## Executive Summary
 
-Point One Navigation has built the world's most accessible centimeter-accurate positioning platform. With the Polaris RTK Network, Location Cloud API, and Positioning Engine, P1 delivers precise outdoor location for vehicles, robots, and connected devices. The recent $35M Series C and stated goal to "solve ubiquitous location...eventually indoors and all domains" signals the next phase of growth.
+Point One Navigation has built the world's most accessible centimeter-accurate positioning platform. With the Polaris RTK Network, Location Cloud API, and Positioning Engine, P1 delivers precise outdoor location for vehicles, robots, and connected devices. The recent \$35M Series C and stated goal to "solve ubiquitous location...eventually indoors and all domains" signals the next phase of growth.
 
 This white paper proposes a practical path to indoor and asset-level tracking by integrating hybrid BLE-Thread mesh networks with P1's existing infrastructure. The architecture enables:
 
@@ -88,7 +88,7 @@ The hybrid architecture introduces two new device classes that integrate with P1
 - Transmit encrypted Eddystone-EID or Channel Sounding signals
 - 8-12 month battery life on CR2032
 - Zero configuration required: activate and attach
-- Cost target: $5-15 per beacon at scale
+- Cost target: \$5-15 per beacon at scale
 
 **Relay Nodes (Battery or Mains Powered)**
 - Dual-radio devices: BLE scanner + Thread mesh networking
@@ -107,13 +107,50 @@ The hybrid architecture introduces two new device classes that integrate with P1
 
 The architecture leverages Polaris-connected gateways as geographic anchors. Every indoor detection inherits real-world coordinates from gateways that know their precise position via Polaris RTK corrections.
 
+```mermaid
+flowchart LR
+    subgraph Sources["Asset Layer"]
+        AB[/"🏷️ Asset Beacon<br/>(BLE)"/]
+    end
+    
+    subgraph Mesh["Mesh Network"]
+        RN[["📡 Relay Node<br/>(Thread)"]]
+    end
+    
+    subgraph Infrastructure["P1 Infrastructure"]
+        GW[("🛰️ P1 Gateway<br/>(Polaris)")]
+        API["☁️ Location Cloud<br/>API"]
+    end
+    
+    subgraph Customer["Customer"]
+        DASH["📊 Dashboard"]
+    end
+    
+    AB -->|"Encrypted ID +<br/>Channel Sounding"| RN
+    RN -->|"Mesh routing +<br/>EID resolution"| GW
+    GW -->|"GNSS-anchored<br/>detections"| API
+    API -->|"Real-time<br/>events"| DASH
+    
+    style AB fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b
+    style RN fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+    style GW fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20
+    style API fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
+    style DASH fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
+    
+    style Sources fill:#e3f2fd,stroke:#1976d2,stroke-width:1px
+    style Mesh fill:#f3e5f5,stroke:#8e24aa,stroke-width:1px
+    style Infrastructure fill:#e8f5e9,stroke:#43a047,stroke-width:1px
+    style Customer fill:#fce4ec,stroke:#d81b60,stroke-width:1px
 ```
-Asset Beacon (BLE) → Relay Node (Thread) → P1 Gateway (Polaris) → Location Cloud API → Customer Dashboard
-     │                    │                    │
-     │                    │                    └── Centimeter-accurate GNSS position via Polaris
-     │                    └── Mesh routing, local EID resolution
-     └── Encrypted identifier, optional Channel Sounding range
-```
+
+**Data Flow Summary:**
+
+| Component | Function | Key Capability |
+|-----------|----------|----------------|
+| **Asset Beacon** | Transmits identity | Encrypted Eddystone-EID, optional Channel Sounding range |
+| **Relay Node** | Bridges BLE→Thread | Mesh routing, local EID resolution, battery-powered |
+| **P1 Gateway** | Anchors to Polaris | Centimeter-accurate GNSS position via RTK corrections |
+| **Location Cloud** | Aggregates & serves | GraphQL API, real-time subscriptions, device management |
 
 **Detection Event Payload:**
 - Asset beacon identifier (resolved from rotating EID)
@@ -168,7 +205,7 @@ P1 gateways become the bridge between GNSS-accurate outdoor positioning and indo
 - Rapidly deployed gateway + relay node kits
 - Track medical supplies, equipment, and provisions
 - No permanent infrastructure required
-- Cellular backhaul to P1 cloud
+- Cellular/Starlink backhaul to P1 cloud
 
 **Pop-up Warehouses / Seasonal Overflow**
 - Battery-powered mesh deployed in hours
@@ -362,8 +399,8 @@ The Location Cloud already manages GNSS devices at scale. Asset beacons and rela
 
 **Per-Device-Under-Management (Non-GNSS Assets)**
 - Monthly fee per active asset beacon
-- Tiered pricing: $0.50-2.00/beacon/month based on volume
-- 100,000 beacons at $1/month = $1.2M ARR per large customer
+- Tiered pricing: \$0.50-2.00/beacon/month based on volume
+- 100,000 beacons at \$1/month = \$1.2M ARR per large customer
 
 **Relay Node Hardware**
 - P1-certified relay nodes sold through channel partners
@@ -416,7 +453,7 @@ Pure BLE solutions lack outdoor integration and precise positioning:
 
 Cellular trackers have higher per-device cost and power consumption:
 
-- Asset beacons: $5-15 vs. $50-150 for cellular
+- Asset beacons: \$5-15 vs. \$50-150 for cellular
 - 12-month battery life vs. weeks/months
 - No cellular subscription per asset
 - Better indoor coverage (BLE penetrates where cellular doesn't)
@@ -490,7 +527,7 @@ Richard is a named inventor on 20 U.S. patents and has held DoD Top Secret/SCI c
 
 ---
 
-**Document Version:** 2.1  
+**Document Version:** 2.2  
 **Date:** December 2025
 
 © 2025 Richard W. Lourette. All rights reserved.
