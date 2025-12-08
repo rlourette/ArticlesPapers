@@ -6,7 +6,7 @@
   <em>Image credit: Richard Lourette and Grok</em>
 </p>
 
-**Version 2.2 | December 2025**
+**Version 2.3 | December 2025**
 
 **Author:** Richard W. Lourette  
 **Contact:** rlourette_at_gmail.com  
@@ -502,6 +502,68 @@ The opportunity is significant: every P1 fleet customer is also a potential asse
 
 ---
 
+## References
+
+### Point One Navigation Sources
+
+1. **TechCrunch** (November 20, 2025). "This Khosla-backed startup can track drones, trucks, and robotaxis, inch by inch." Retrieved from: https://techcrunch.com/2025/11/20/this-khosla-based-startup-can-track-drones-trucks-and-robotaxis-inch-by-inch/
+   - Source for: \$35M Series C funding, \$230M valuation, Aaron Nathan quotes on indoor navigation goals, customer deployment numbers (150,000+ EV vehicles, 300,000 delivery vehicles), 10x robotics growth
+
+2. **Point One Navigation GraphQL API Documentation**. Retrieved from: https://docs.pointonenav.com/graphql-api/
+   - Source for: API patterns, `myDevices` query, `setDeviceTag` mutation, WebSocket subscriptions, device filtering
+
+3. **Point One Navigation GitHub - Polaris Client**. Retrieved from: https://github.com/PointOneNav/polaris
+   - Source for: Polaris RTK corrections service architecture, RTCM 10403 implementation, C/C++ client libraries
+
+4. **Point One Navigation GitHub - FusionEngine Client**. Retrieved from: https://github.com/PointOneNav/fusion-engine-client
+   - Source for: Positioning Engine message protocols, sensor fusion architecture
+
+5. **Point One Navigation Developer Resources**. Retrieved from: https://pointonenav.com/resources/
+   - Source for: Polaris network coverage, device management capabilities
+
+### Bluetooth Technology Sources
+
+6. **Bluetooth SIG** (September 2024). "Bluetooth Core Specification 6.0." Retrieved from: https://www.bluetooth.com/specifications/specs/core-specification-6-0/
+   - Source for: Channel Sounding specification, Phase-Based Ranging (PBR), Round-Trip Time (RTT) security features
+
+7. **Bluetooth SIG** (September 3, 2024). "Bluetooth SIG Introduces True Distance Awareness." Press release. Retrieved from: https://www.bluetooth.com/press/bluetooth-channel-sounding/
+   - Source for: 10-centimeter accuracy claims, single-antenna capability, security features, Neville Meijers CEO quote
+
+8. **Nordic Semiconductor**. "nRF54L15 - Ultra-low-power wireless SoC." Product documentation. Retrieved from: https://www.nordicsemi.com/Products/nRF54L15
+   - Source for: BLE 6.0 Channel Sounding silicon availability, Thread support
+
+9. **Silicon Labs**. "xG24 Wireless SoC." Product documentation. Retrieved from: https://www.silabs.com/wireless/zigbee/efr32mg24-series-2-socs
+   - Source for: Multi-protocol BLE + Thread support, Channel Sounding readiness
+
+### Thread/Matter Sources
+
+10. **Thread Group**. "Thread 1.3 Specification." Retrieved from: https://www.threadgroup.org/
+    - Source for: IPv6 mesh networking, Sleepy End Device power characteristics, Border Router functionality
+
+11. **Connectivity Standards Alliance**. "Matter Specification." Retrieved from: https://csa-iot.org/all-solutions/matter/
+    - Source for: Matter over Thread interoperability
+
+12. **IKEA** (November 2025). "IKEA launches new smart home range with 21 Matter-compatible products." Press release. Retrieved from: https://www.ikea.com/global/en/newsroom/retail/the-new-smart-home-from-ikea-matter-compatible-251106/
+    - Source for: Industry adoption momentum, 21 Matter-over-Thread devices
+
+### Indoor Positioning Context
+
+13. **Quuppa**. "Quuppa Intelligent Locating System." Technical overview. Retrieved from: https://www.quuppa.com/
+    - Source for: Competitive comparison, antenna array-based RTLS architecture
+
+14. **Zebra Technologies**. "Real-Time Location Systems (RTLS)." Product documentation. Retrieved from: https://www.zebra.com/us/en/solutions/intelligent-edge-solutions/rtls.html
+    - Source for: Competitive comparison, enterprise RTLS market
+
+### Standards
+
+15. **RTCM Special Committee 104**. "RTCM 10403.x - Differential GNSS Services, Version 3." Retrieved from: https://www.rtcm.org/publications
+    - Source for: RTK corrections data format used by Polaris network
+
+16. **IEEE 802.15.4** (2020). "IEEE Standard for Low-Rate Wireless Networks." Retrieved from: https://en.wikipedia.org/wiki/IEEE_802.15.4
+    - Source for: Thread PHY/MAC layer foundation
+
+---
+
 ## About the Author
 
 **Richard W. Lourette** is the founder and principal consultant at RL Tech Solutions LLC, bringing 30+ years of experience in embedded systems architecture across aerospace, defense, and industrial IoT.
@@ -527,7 +589,7 @@ Richard is a named inventor on 20 U.S. patents and has held DoD Top Secret/SCI c
 
 ---
 
-**Document Version:** 2.2  
+**Document Version:** 2.3  
 **Date:** December 2025
 
 © 2025 Richard W. Lourette. All rights reserved.
