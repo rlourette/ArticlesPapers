@@ -832,7 +832,7 @@ Covariance Matrix: P (3×3 uncertainty estimate)
 For static relay nodes, the prediction step simply propagates the previous estimate with added process noise to account for potential drift:
 
 ```
-x̂ₖ|ₖ₋₁ = x̂ₖ₋₁           (position unchanged for static relay)
+x̂ₖ|ₖ₋₁ = x̂ₖ₋₁            (position unchanged for static relay)
 Pₖ|ₖ₋₁ = Pₖ₋₁ + Q        (add process noise covariance)
 ```
 
@@ -861,8 +861,8 @@ The R matrix combines uncertainties from multiple sources:
 R = R_rtk + R_cs + R_multipath
 
 Where:
-  R_rtk      = RTK position uncertainty (typically ±0.02m, from P1 device)
-  R_cs       = Channel Sounding ranging uncertainty (typically ±0.1m)
+  R_rtk       = RTK position uncertainty (typically ±0.02m, from P1 device)
+  R_cs        = Channel Sounding ranging uncertainty (typically ±0.1m)
   R_multipath = Environment-dependent multipath error (0.1-0.5m indoor)
 ```
 
@@ -884,8 +884,8 @@ The Particle Filter represents the position probability distribution using N wei
 Particles: {x⁽ⁱ⁾, w⁽ⁱ⁾} for i = 1...N
 
 For each measurement z:
-1. PREDICT: x⁽ⁱ⁾ₖ|ₖ₋₁ = f(x⁽ⁱ⁾ₖ₋₁) + noise
-2. UPDATE:  w⁽ⁱ⁾ ∝ p(z | x⁽ⁱ⁾ₖ|ₖ₋₁)
+1. PREDICT:  x⁽ⁱ⁾ₖ|ₖ₋₁ = f(x⁽ⁱ⁾ₖ₋₁) + noise
+2. UPDATE:   w⁽ⁱ⁾ ∝ p(z | x⁽ⁱ⁾ₖ|ₖ₋₁)
 3. RESAMPLE: Draw N particles proportional to weights
 
 Estimate: x̂ = Σᵢ w⁽ⁱ⁾ x⁽ⁱ⁾
