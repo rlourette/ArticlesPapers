@@ -6,7 +6,7 @@
   <em>Image credit: Richard Lourette and Grok</em>
 </p>
 
-**Version 2.3 | December 2025**
+**Version 2.5 | December 2025**
 
 **Author:** Richard W. Lourette  
 **Contact:** rlourette_at_gmail.com  
@@ -35,8 +35,11 @@ This white paper proposes a practical path to indoor and asset-level tracking by
 
 - **Seamless outdoor-to-indoor handoff** using P1 gateways as mesh coordinators
 - **Passive asset tracking** for pallets, boxes, and containers without per-item GNSS hardware
+- **Self-locating relay mesh** that automatically derives anchor positions from nearby P1-enabled vehicles, eliminating manual surveying and enabling rapid deployment
 - **Scalable deployment** supporting 100,000+ tracked assets per facility
 - **New revenue streams** through per-device-under-management pricing for non-GNSS assets
+
+**Key Innovation:** The self-locating mesh architecture transforms every P1-enabled vehicle (forklift, tractor, AGV) into a mobile positioning anchor. Using Bluetooth 6.0 Channel Sounding and Kalman filtering, relay nodes automatically derive their positions from passing P1 equipment, then use trilateration to locate asset tags. This eliminates the deployment friction that plagues traditional RTLS systems: no surveying, no per-anchor GNSS hardware, no recalibration when equipment moves.
 
 This approach complements P1's roadmap rather than competing with it, providing near-term indoor coverage while P1 develops more sophisticated positioning technologies.
 
@@ -74,6 +77,25 @@ Beyond indoor positioning, there's a parallel opportunity in **passive asset tra
 - Has this shipment moved from dock to storage to outbound staging?
 
 This visibility requires tracking assets that can't carry GNSS receivers: coin-cell-powered beacons on pallets, boxes, and containers.
+
+### 1.4 The Deployment Friction Problem
+
+Traditional Real-Time Location Systems (RTLS) suffer from a fundamental deployment barrier: every anchor point must have a precisely known position. This means either:
+
+- **Expensive per-anchor GNSS hardware** (\$500-2000 per anchor), or
+- **Time-consuming manual surveying** that must be repeated whenever equipment moves
+
+This friction limits RTLS adoption to permanent, high-value installations. Temporary facilities, seasonal overflow, and rapidly reconfigured spaces are impractical to serve.
+
+**P1's Unique Opportunity**
+
+P1 customers already operate fleets of equipment with centimeter-accurate RTK positioning: forklifts, tractors, AGVs, yard trucks. These vehicles continuously receive Polaris corrections and know their positions precisely. This paper proposes leveraging that existing infrastructure as a **distributed positioning network**.
+
+The key insight: relay nodes can automatically derive their positions from nearby P1-enabled equipment using Bluetooth 6.0 Channel Sounding and sensor fusion algorithms. As P1 vehicles traverse the facility, they "donate" their positions to stationary relay nodes. The relay nodes then use trilateration to locate passive asset tags.
+
+This **self-locating mesh** architecture eliminates surveying entirely. Deploy relay nodes, let P1 vehicles drive past, and the system self-calibrates. Move a relay node? It automatically re-localizes. Set up a temporary facility? The mesh configures itself as equipment operates.
+
+No other RTLS vendor can offer this capability. It requires the combination of widespread RTK-equipped vehicles and a unified positioning platform that P1 uniquely possesses.
 
 ---
 
@@ -212,6 +234,55 @@ P1 gateways become the bridge between GNSS-accurate outdoor positioning and indo
 - Full asset visibility without facility modification
 - Recover and redeploy as needs change
 
+### 3.4 Relay Node Position Anchoring via P1-Enabled Devices
+
+A key architectural innovation: relay nodes can obtain their own position from nearby P1-enabled equipment rather than requiring individual GNSS receivers or manual surveying.
+
+**The Challenge**
+
+Traditional RTLS systems require each anchor point to have a precisely surveyed position. This creates deployment friction: either expensive GNSS hardware in every anchor, or time-consuming manual surveying that must be repeated whenever equipment moves.
+
+**The P1 Advantage**
+
+Many P1 customers already operate fleets of P1-enabled equipment: forklifts in warehouses, tractors in agriculture, AGVs in manufacturing, service vehicles in logistics. These devices continuously receive Polaris RTK corrections and maintain centimeter-accurate position. This existing infrastructure becomes a distributed positioning network.
+
+**Position Donation Protocol**
+
+```mermaid
+sequenceDiagram
+    participant F as 🚜 Forklift<br/>(P1-Enabled)
+    participant R as 📡 Relay Node<br/>(on rack)
+    participant C as ☁️ Location Cloud
+
+    Note over F: RTK Position: 47.6205°, -122.3493°<br/>Accuracy: ±0.02m
+
+    F->>R: BLE Advertisement (P1 device present)
+    R->>F: Channel Sounding Request
+    F->>R: Channel Sounding Response
+    
+    Note over F,R: Distance measured: 3.2m @ 47°
+
+    F->>R: Position Donation Message<br/>(lat, lon, alt, accuracy, timestamp)
+    
+    Note over R: Calculate own position:<br/>Relay = Forklift + Offset Vector<br/>= 47.6205°, -122.3493° + (3.2m @ 47°)
+
+    R->>C: Thread Mesh: Position Update<br/>(relay_id, derived_position, confidence)
+    C->>C: Store relay position<br/>Average with previous observations
+
+    Note over R: Relay now has known position<br/>Can estimate asset tag locations
+```
+
+**How It Works:**
+
+1. **P1-enabled device** (forklift, AGV, tractor) operates in the facility with RTK positioning active
+2. **Proximity detection:** When the device comes within BLE range of a relay node, both devices recognize each other
+3. **Channel Sounding exchange:** The P1 device and relay node perform a Channel Sounding measurement to determine precise distance and (with multiple antennas) direction
+4. **Position transfer:** The P1 device shares its current RTK position with the relay node via BLE or Thread
+5. **Relay node calculation:** The relay computes its own position using sensor fusion algorithms (see Section 4.4)
+6. **Position refinement:** As multiple P1 devices pass by over time, the estimate converges to high accuracy
+
+This approach transforms every P1-enabled vehicle into a mobile positioning anchor, extending RTK-grade accuracy from the vehicle to the assets around it. The technical details of position estimation, including Kalman filtering, trilateration, and self-locating mesh algorithms, are covered in Section 4.4.
+
 ---
 
 ## 4. Enabling Technologies
@@ -242,7 +313,7 @@ Thread provides the mesh backhaul for relay node communication:
 
 **Low Power:** Thread Sleepy End Devices can achieve multi-year battery life while maintaining mesh connectivity.
 
-**Industry Momentum:** IKEA announced 20 Matter-over-Thread devices (July 2025). Apple, Google, Amazon all shipping Thread Border Routers. Nordic and Silicon Labs have mature OpenThread implementations.
+**Industry Momentum:** IKEA announced 21 Matter-over-Thread devices (November 2025). Apple, Google, Amazon all shipping Thread Border Routers. Nordic and Silicon Labs have mature OpenThread implementations.
 
 ### 4.3 Eddystone-EID for Privacy and Security
 
@@ -252,6 +323,135 @@ Asset beacons transmit rotating encrypted identifiers (Eddystone-EID) rather tha
 - Identity resolution happens at P1 cloud with customer-specific keys
 - Relay nodes can cache resolutions for offline operation
 - Aligns with P1's security-first architecture
+
+### 4.4 Self-Locating Mesh Architecture
+
+This section details the sensor fusion algorithms that enable relay nodes to determine their own positions automatically. This key innovation eliminates manual surveying and enables rapid deployment.
+
+**The Challenge**
+
+A single range measurement from one P1 device provides only a noisy position estimate. Real-world deployments face multipath reflections, NLOS (non-line-of-sight) conditions, and varying measurement quality. The solution is recursive state estimation using Kalman filtering and related techniques.
+
+**Extended Kalman Filter (EKF) for Relay Position Estimation**
+
+Each relay node maintains a state estimate of its own position along with an uncertainty measure. As P1 devices pass by and donate their positions, the EKF fuses these observations to progressively refine the relay's position estimate. The filter automatically weights each observation based on its expected accuracy and rejects outliers that are inconsistent with the current estimate.
+
+The EKF is well-suited for this application because it handles noisy measurements, adapts to varying P1 device accuracy, and converges quickly even when starting with no prior position knowledge. For mathematical details, see Appendix A.
+
+**Convergence Behavior:**
+
+| Observations | Typical Uncertainty | Use Case |
+|-------------|---------------------|----------|
+| 1 | ±0.5m | Initial estimate |
+| 3-5 | ±0.2m | Operational accuracy |
+| 10+ | ±0.1m | High confidence |
+| 50+ | ±0.05m | Survey-grade |
+
+**Alternative Estimation Approaches**
+
+For scenarios where standard assumptions do not hold, alternative algorithms may be employed:
+
+- **Particle Filter:** Handles non-Gaussian noise distributions common in indoor RF environments by maintaining multiple position hypotheses
+- **Factor Graph Optimization:** Solves for globally consistent positions across the entire relay mesh simultaneously
+- **Weighted Least Squares:** Batch approach suitable for periodic position recalculation
+
+See Appendix A for detailed descriptions of these algorithms.
+
+**Relay-to-Relay Ranging for Self-Locating Mesh**
+
+The positioning fabric becomes truly self-locating when relay nodes can also range to each other:
+
+```mermaid
+flowchart LR
+    subgraph SelfLocating["Self-Locating Relay Mesh"]
+        P1["🚜 P1 Device<br/>RTK Position Known"]
+        
+        R1["📡 Relay 1"]
+        R2["📡 Relay 2"]
+        R3["📡 Relay 3"]
+        R4["📡 Relay 4"]
+        
+        P1 -->|"CS: 2.1m"| R1
+        P1 -.->|"occasional"| R3
+        
+        R1 <-->|"CS: 4.5m"| R2
+        R1 <-->|"CS: 6.2m"| R3
+        R2 <-->|"CS: 3.8m"| R3
+        R2 <-->|"CS: 5.1m"| R4
+        R3 <-->|"CS: 4.9m"| R4
+    end
+    
+    style P1 fill:#c8e6c9,stroke:#43a047,stroke-width:2px
+    style R1 fill:#e3f2fd,stroke:#1976d2
+    style R2 fill:#e3f2fd,stroke:#1976d2
+    style R3 fill:#e3f2fd,stroke:#1976d2
+    style R4 fill:#e3f2fd,stroke:#1976d2
+```
+
+**How Relay-to-Relay Ranging Helps:**
+
+1. **Position propagation:** Relay 1 gets position from P1 device. Relay 2 ranges to Relay 1, derives its own position. Relay 4 (never sees P1 device) still gets positioned via the chain.
+
+2. **Redundancy:** Multiple paths to position each relay improves accuracy and detects inconsistencies.
+
+3. **Geometric constraints:** Inter-relay distances constrain the solution space, enabling factor graph optimization across the entire mesh.
+
+4. **Drift detection:** If a relay is accidentally moved, its inter-relay distances change, triggering re-localization.
+
+**Implementation Considerations:**
+
+- **Compute location:** EKF runs on-device for real-time updates; factor graph optimization runs in Location Cloud for global consistency
+- **Update frequency:** Position donations occur opportunistically; inter-relay ranging can be scheduled hourly to conserve power
+- **Bootstrapping:** New relay nodes start with high uncertainty; system prioritizes routing P1 devices past unlocalized relays
+- **Outlier rejection:** Mahalanobis distance gating rejects statistically inconsistent measurements
+
+**Trilateration for Asset Tag Positioning**
+
+Once relay nodes know their own positions, they can estimate the location of passive asset tags using trilateration, which computes position from distance measurements to three or more known reference points:
+
+```mermaid
+flowchart TB
+    subgraph Trilateration["Asset Position via Trilateration"]
+        direction TB
+        
+        RA["📡 Relay A<br/>Position: Known<br/>47.6205°, -122.3492°"]
+        RB["📡 Relay B<br/>Position: Known<br/>47.6204°, -122.3495°"]
+        RC["📡 Relay C<br/>Position: Known<br/>47.6207°, -122.3494°"]
+        
+        TAG["📦 Asset Tag<br/>(Pallet)"]
+        
+        RA -->|"2.1m @ 315°"| TAG
+        RB -->|"3.4m @ 127°"| TAG
+        RC -->|"4.2m @ 045°"| TAG
+        
+        RESULT["✅ Computed Position<br/>47.6205°, -122.3494°<br/>Accuracy: ±0.15m"]
+        TAG --> RESULT
+    end
+
+    style RA fill:#e3f2fd,stroke:#1976d2
+    style RB fill:#e3f2fd,stroke:#1976d2
+    style RC fill:#e3f2fd,stroke:#1976d2
+    style TAG fill:#fff3e0,stroke:#f57c00
+    style RESULT fill:#e8f5e9,stroke:#43a047
+```
+
+**Accuracy Scaling:**
+
+| Relay Observations | Typical Accuracy | Use Case |
+|-------------------|------------------|----------|
+| Single relay | ±0.5m | Zone identification |
+| Two relays | ±0.3m | Aisle-level positioning |
+| Three+ relays | ±0.15m | Slot-level positioning |
+
+**Deployment Benefits vs. Traditional RTLS:**
+
+| Aspect | Traditional RTLS | P1 Self-Locating Mesh |
+|--------|------------------|----------------------|
+| **Anchor positioning** | Manual survey or per-anchor GNSS | Automatic via mobile P1 devices |
+| **Deployment time** | Days (surveying) | Hours (self-configuring) |
+| **Anchor hardware cost** | \$500-2000/anchor | \$50-100/relay node |
+| **Position updates** | Static (requires re-survey) | Dynamic (continuous refinement) |
+| **Mobile deployments** | Difficult | Native capability |
 
 ---
 
@@ -564,6 +764,203 @@ The opportunity is significant: every P1 fleet customer is also a potential asse
 
 ---
 
+## Glossary
+
+**AGV (Automated Guided Vehicle):** Self-driving material handling equipment used in warehouses and factories for transporting goods without human operators.
+
+**Channel Sounding:** A Bluetooth 6.0 feature that measures distance between devices by analyzing signal characteristics across multiple frequency channels. Achieves 10-centimeter accuracy using phase-based ranging.
+
+**Covariance Matrix:** A mathematical representation of uncertainty and correlations between estimated variables. In positioning, it quantifies how confident the system is about each coordinate and how errors in one dimension relate to errors in others.
+
+**Dead Reckoning:** Position estimation by integrating velocity and heading measurements from motion sensors. Useful for short-term position continuity but accumulates drift over time without external corrections.
+
+**Eddystone-EID (Ephemeral Identifier):** A Google-developed beacon protocol that transmits encrypted, rotating identifiers. Prevents unauthorized tracking while allowing authorized systems to resolve the beacon's true identity.
+
+**EKF (Extended Kalman Filter):** A recursive algorithm for estimating the state of a system from noisy measurements. Extends the classic Kalman filter to handle nonlinear relationships between measurements and state variables.
+
+**Factor Graph:** A graphical model representing the relationships between variables and constraints. In positioning, nodes represent device positions and edges represent distance measurements, enabling globally consistent solutions.
+
+**IMU (Inertial Measurement Unit):** A sensor package containing accelerometers and gyroscopes that measure acceleration and rotation. Used for dead reckoning and sensor fusion in navigation systems.
+
+**Innovation Gating:** An outlier rejection technique that discards measurements whose difference from the predicted value exceeds a statistical threshold based on expected uncertainty.
+
+**IPv6 (Internet Protocol version 6):** The latest version of the Internet Protocol, providing a vastly expanded address space that allows every device to have a unique, routable address.
+
+**Mahalanobis Distance:** A statistical measure of distance that accounts for correlations and variances in the data. Used to determine whether a measurement is consistent with an expected distribution, enabling outlier detection.
+
+**Multipath:** A radio propagation phenomenon where signals reflect off surfaces and arrive at the receiver via multiple paths. Causes range measurement errors in indoor environments.
+
+**NLOS (Non-Line-of-Sight):** A condition where the direct path between transmitter and receiver is obstructed, forcing signals to travel via reflections or diffraction. Degrades ranging accuracy.
+
+**Particle Filter:** A Sequential Monte Carlo method that represents probability distributions using weighted samples (particles). Handles non-Gaussian noise and multimodal hypotheses better than Kalman filters.
+
+**Phase-Based Ranging (PBR):** A distance measurement technique that calculates range from the phase difference of signals transmitted across multiple frequencies.
+
+**RSSI (Received Signal Strength Indicator):** A measurement of received signal power, commonly used for rough proximity estimation. Less accurate than Channel Sounding but simpler to implement.
+
+**RTK (Real-Time Kinematic):** A satellite navigation technique that achieves centimeter-level accuracy by using carrier phase measurements and real-time corrections from a reference station or network.
+
+**RTLS (Real-Time Location System):** Infrastructure for automatically tracking the location of assets or personnel within a defined area, typically using radio frequency technologies.
+
+**Thread:** An IPv6-based mesh networking protocol designed for low-power IoT devices. Provides self-healing connectivity and supports devices that sleep most of the time to conserve battery.
+
+**Thread Border Router:** A device that bridges a Thread mesh network to external IP networks such as Wi-Fi or Ethernet, enabling Thread devices to communicate with the broader internet.
+
+**Trilateration:** A positioning technique that determines location by measuring distances from three or more reference points with known positions. The intersection of the resulting spheres (or circles in 2D) yields the target position.
+
+**ULD (Unit Load Device):** A standardized container or pallet used for air cargo transport, designed to fit aircraft cargo holds efficiently.
+
+**WMS (Warehouse Management System):** Software that controls and optimizes warehouse operations including inventory tracking, order fulfillment, and storage optimization.
+
+---
+
+## Appendix A: Mathematical Details
+
+This appendix provides the mathematical foundations for the sensor fusion algorithms described in Section 4.4.
+
+### A.1 Extended Kalman Filter Equations
+
+The EKF maintains a state vector and covariance matrix:
+
+```
+State Vector: x = [lat, lon, alt]ᵀ
+Covariance Matrix: P (3×3 uncertainty estimate)
+```
+
+**Predict Step**
+
+For static relay nodes, the prediction step simply propagates the previous estimate with added process noise to account for potential drift:
+
+```
+x̂ₖ|ₖ₋₁ = x̂ₖ₋₁           (position unchanged for static relay)
+Pₖ|ₖ₋₁ = Pₖ₋₁ + Q        (add process noise covariance)
+```
+
+Where Q is typically near-zero for fixed relays but may be increased if relay movement is suspected.
+
+**Update Step**
+
+When a position donation arrives from a P1 device:
+
+```
+Measurement:      z = P1_position + channel_sounding_offset
+Innovation:       y = z - x̂ₖ|ₖ₋₁
+Innovation Cov:   S = Pₖ|ₖ₋₁ + R
+Kalman Gain:      K = Pₖ|ₖ₋₁ S⁻¹
+Updated State:    x̂ₖ = x̂ₖ|ₖ₋₁ + K·y
+Updated Cov:      Pₖ = (I - K)Pₖ|ₖ₋₁
+```
+
+Where R is the measurement noise covariance, derived from the combined uncertainty of the P1 device's RTK position and the Channel Sounding range measurement.
+
+**Measurement Noise Covariance**
+
+The R matrix combines uncertainties from multiple sources:
+
+```
+R = R_rtk + R_cs + R_multipath
+
+Where:
+  R_rtk      = RTK position uncertainty (typically ±0.02m, from P1 device)
+  R_cs       = Channel Sounding ranging uncertainty (typically ±0.1m)
+  R_multipath = Environment-dependent multipath error (0.1-0.5m indoor)
+```
+
+### A.2 Why EKF is Ideal for Relay Position Estimation
+
+| Challenge | EKF Solution |
+|-----------|--------------|
+| Noisy range measurements | Measurement noise covariance (R) weights observations appropriately |
+| Varying P1 device accuracy | R adapts based on reported RTK accuracy (±2cm vs ±10cm) |
+| Multipath/NLOS outliers | Innovation gating rejects measurements where \|y\| > 3√S |
+| Unknown initial position | Large initial P (e.g., 1000m²) allows rapid convergence |
+| Static relay assumption | Q ≈ 0 for fixed relays; increase Q if movement detected |
+
+### A.3 Particle Filter
+
+The Particle Filter represents the position probability distribution using N weighted samples:
+
+```
+Particles: {x⁽ⁱ⁾, w⁽ⁱ⁾} for i = 1...N
+
+For each measurement z:
+1. PREDICT: x⁽ⁱ⁾ₖ|ₖ₋₁ = f(x⁽ⁱ⁾ₖ₋₁) + noise
+2. UPDATE:  w⁽ⁱ⁾ ∝ p(z | x⁽ⁱ⁾ₖ|ₖ₋₁)
+3. RESAMPLE: Draw N particles proportional to weights
+
+Estimate: x̂ = Σᵢ w⁽ⁱ⁾ x⁽ⁱ⁾
+```
+
+**Advantages over EKF:**
+- Handles non-Gaussian noise (common in indoor RF)
+- Represents multimodal distributions (relay could be in multiple possible locations)
+- No linearization required
+
+**Disadvantages:**
+- Computationally expensive (N = 100-1000 particles typical)
+- May require more memory than available on low-power relay MCUs
+
+### A.4 Factor Graph Optimization
+
+Models the relay mesh as a graph:
+- **Variable nodes:** Relay positions (x₁, x₂, ... xₙ)
+- **Factor nodes:** Constraints from measurements
+
+```
+Minimize: Σᵢⱼ ||d_measured(i,j) - ||xᵢ - xⱼ|| ||² / σᵢⱼ²
+
+Subject to: Anchor constraints from P1 device observations
+```
+
+Solved iteratively using Gauss-Newton or Levenberg-Marquardt optimization.
+
+**Advantages:**
+- Globally consistent solution across entire mesh
+- Naturally incorporates relay-to-relay ranging
+- Can detect and correct for moved relays
+
+**Implementation:**
+- Typically runs in Location Cloud (not on relay MCU)
+- Executed periodically (e.g., hourly) or when topology changes
+- Results pushed back to relay nodes
+
+### A.5 Mahalanobis Distance for Outlier Rejection
+
+The Mahalanobis distance measures how far a measurement is from the expected value, normalized by uncertainty:
+
+```
+d_M = √(yᵀ S⁻¹ y)
+
+Where:
+  y = innovation (measurement - prediction)
+  S = innovation covariance
+```
+
+Measurements with d_M > threshold (typically 3.0) are rejected as outliers. This approach automatically adapts to the current uncertainty: when position is poorly known, more measurements are accepted; as confidence increases, outliers are more readily rejected.
+
+### A.6 Trilateration Mathematics
+
+Given distances d₁, d₂, d₃ from relay nodes at known positions (x₁,y₁), (x₂,y₂), (x₃,y₃):
+
+```
+(x - x₁)² + (y - y₁)² = d₁²
+(x - x₂)² + (y - y₂)² = d₂²
+(x - x₃)² + (y - y₃)² = d₃²
+```
+
+Subtracting equations to linearize:
+
+```
+2(x₂-x₁)x + 2(y₂-y₁)y = d₁² - d₂² + x₂² - x₁² + y₂² - y₁²
+2(x₃-x₁)x + 2(y₃-y₁)y = d₁² - d₃² + x₃² - x₁² + y₃² - y₁²
+```
+
+Solve the resulting 2×2 linear system for (x, y).
+
+With more than three relays, use weighted least squares to find the position that minimizes total squared error, with weights inversely proportional to measurement uncertainty.
+
+---
+
 ## About the Author
 
 **Richard W. Lourette** is the founder and principal consultant at RL Tech Solutions LLC, bringing 30+ years of experience in embedded systems architecture across aerospace, defense, and industrial IoT.
@@ -589,7 +986,7 @@ Richard is a named inventor on 20 U.S. patents and has held DoD Top Secret/SCI c
 
 ---
 
-**Document Version:** 2.3  
+**Document Version:** 2.5  
 **Date:** December 2025
 
 © 2025 Richard W. Lourette. All rights reserved.
