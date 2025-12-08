@@ -6,7 +6,7 @@
   <em>Image credit: Richard Lourette and Grok</em>
 </p>
 
-**Version 2.5 | December 2025**
+**Version 2.6 | December 2025**
 
 **Author:** Richard W. Lourette  
 **Contact:** rlourette_at_gmail.com  
@@ -453,6 +453,69 @@ flowchart TB
 | **Position updates** | Static (requires re-survey) | Dynamic (continuous refinement) |
 | **Mobile deployments** | Difficult | Native capability |
 
+### 4.5 Protocol Coexistence on Asset Tags
+
+A common question: can a single asset tag support both Eddystone-EID (secure identity) and Channel Sounding (precision ranging)? The answer is yes. These protocols serve complementary functions and coexist naturally on modern BLE 6.0 silicon.
+
+**How Both Protocols Operate on One Device**
+
+```mermaid
+flowchart LR
+    subgraph AssetTag["BLE 6.0 Asset Tag (e.g., nRF54L15)"]
+        direction TB
+        ADV["Advertising Engine"]
+        CS["Channel Sounding Reflector"]
+    end
+    
+    subgraph Channels["BLE Radio Channels"]
+        ADV_CH["Advertising Channels<br/>(37, 38, 39)"]
+        DATA_CH["Data Channels<br/>(0-36)"]
+    end
+    
+    subgraph Relay["Relay Node"]
+        SCAN["Scanner"]
+        CSI["CS Initiator"]
+    end
+    
+    ADV -->|"Eddystone-EID<br/>Broadcast"| ADV_CH
+    ADV_CH -->|"Identity"| SCAN
+    
+    CSI -->|"CS Request"| DATA_CH
+    DATA_CH -->|"Tone Exchange"| CS
+    CS -->|"CS Response"| DATA_CH
+    DATA_CH -->|"Distance: 3.2m"| CSI
+    
+    style AssetTag fill:#e3f2fd,stroke:#1976d2
+    style Relay fill:#c8e6c9,stroke:#43a047
+```
+
+**Protocol Functions:**
+
+| Protocol | Purpose | Radio Usage | Power Impact |
+|----------|---------|-------------|--------------|
+| Eddystone-EID | Secure identity broadcast | Advertising channels, periodic beacon | Low (passive broadcast) |
+| Channel Sounding | Precision distance measurement | Data channels, on-demand response | Moderate (only when queried) |
+
+The two protocols use different radio channels and serve different purposes:
+
+1. **Eddystone-EID** broadcasts on advertising channels (37, 38, 39) at configurable intervals, typically every 1-10 seconds. The rotating encrypted identifier enables secure detection without pairing.
+
+2. **Channel Sounding** operates on data channels (0-36) only when a relay node initiates a ranging session. The tag acts as a reflector, responding to tone sequences to enable distance calculation.
+
+Because advertising and data channel operations are independent, a tag can broadcast its identity continuously while responding to ranging requests as they arrive. The BLE stack handles channel switching automatically.
+
+**Asset Tag Product Tiers**
+
+This protocol flexibility enables a tiered product strategy:
+
+| Tier | Protocols | Accuracy | Battery Life | Target Price | Use Case |
+|------|-----------|----------|--------------|--------------|----------|
+| **Basic** | Eddystone-EID only | Zone (±3m via RSSI) | 36+ months | \$5-8 | Presence detection, zone transitions |
+| **Standard** | Eddystone-EID + CS Reflector | Sub-meter (±0.3m) | 18-24 months | \$12-18 | Aisle-level tracking, inventory |
+| **Precision** | Eddystone-EID + CS + IMU | Centimeter (±0.1m) | 12-18 months | \$25-40 | High-value assets, AGV coordination |
+
+All tiers share the same secure identity infrastructure and Location Cloud integration. The difference lies in positioning accuracy and hardware cost, allowing customers to match tag capability to asset value.
+
 ---
 
 ## 5. Integration with P1's Platform
@@ -627,6 +690,47 @@ The Location Cloud already manages GNSS devices at scale. Asset beacons and rela
 **For Supply Chain Visibility:**
 "Track anything, anywhere, anytime, from manufacturer to distribution center to delivery vehicle to final destination."
 
+### 6.3 Tag Portfolio Strategy
+
+The protocol coexistence described in Section 4.5 enables a deliberate product tiering strategy that balances market penetration with margin optimization.
+
+**Volume vs. Margin Mix**
+
+| Tier | Volume Role | Margin Role | Typical Deployment Ratio |
+|------|-------------|-------------|-------------------------|
+| Basic (\$5-8) | High volume, land-and-expand | Low margin, drives platform adoption | 60-70% of tags |
+| Standard (\$12-18) | Core business, most versatile | Healthy margin, subscription anchor | 25-35% of tags |
+| Precision (\$25-40) | Premium positioning | High margin, differentiation | 5-10% of tags |
+
+**Customer Deployment Pattern**
+
+A typical large customer deployment follows a predictable progression:
+
+1. **Pilot (100-500 tags):** Mixed Basic and Standard to validate accuracy requirements
+2. **Rollout (5,000-20,000 tags):** Majority Basic for broad coverage, Standard for high-value zones
+3. **Optimization (ongoing):** Precision tags added for specific use cases (dock doors, AGV handoff points)
+
+**Unit Economics Example (10,000 tag deployment)**
+
+| Component | Quantity | Unit Price | Revenue | Gross Margin |
+|-----------|----------|------------|---------|--------------|
+| Basic tags | 6,500 | \$6 | \$39,000 | 40% |
+| Standard tags | 3,000 | \$15 | \$45,000 | 50% |
+| Precision tags | 500 | \$32 | \$16,000 | 55% |
+| **Hardware total** | 10,000 | | **\$100,000** | **47%** |
+| Monthly subscription | 10,000 | \$1.00 | \$10,000/mo | 85% |
+| **Year 1 total** | | | **\$220,000** | **62%** |
+
+The recurring subscription revenue transforms hardware margin into a SaaS-like model. By year two, cumulative subscription revenue exceeds hardware revenue, establishing predictable ARR growth.
+
+**Competitive Moat**
+
+This tiered approach creates multiple barriers to displacement:
+
+- **Low-tier volume** makes rip-and-replace expensive for competitors
+- **Platform lock-in** through Location Cloud integration and unified API
+- **Upgrade path** keeps customers expanding within the P1 ecosystem rather than evaluating alternatives
+
 ---
 
 ## 7. Competitive Positioning
@@ -771,6 +875,8 @@ The opportunity is significant: every P1 fleet customer is also a potential asse
 **Channel Sounding:** A Bluetooth 6.0 feature that measures distance between devices by analyzing signal characteristics across multiple frequency channels. Achieves 10-centimeter accuracy using phase-based ranging.
 
 **Covariance Matrix:** A mathematical representation of uncertainty and correlations between estimated variables. In positioning, it quantifies how confident the system is about each coordinate and how errors in one dimension relate to errors in others.
+
+**CS Reflector:** A Bluetooth 6.0 device role in Channel Sounding where the device responds to ranging requests from an initiator. Asset tags typically operate as reflectors, enabling relay nodes (initiators) to measure distance to the tag.
 
 **Dead Reckoning:** Position estimation by integrating velocity and heading measurements from motion sensors. Useful for short-term position continuity but accumulates drift over time without external corrections.
 
@@ -986,7 +1092,7 @@ Richard is a named inventor on 20 U.S. patents and has held DoD Top Secret/SCI c
 
 ---
 
-**Document Version:** 2.5  
+**Document Version:** 2.6
 **Date:** December 2025
 
 © 2025 Richard W. Lourette. All rights reserved.
