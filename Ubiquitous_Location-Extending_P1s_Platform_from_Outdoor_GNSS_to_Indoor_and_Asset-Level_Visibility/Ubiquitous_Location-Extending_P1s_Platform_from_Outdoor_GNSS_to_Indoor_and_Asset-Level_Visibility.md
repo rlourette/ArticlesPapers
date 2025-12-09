@@ -6,7 +6,7 @@
   <em>Image credit: Richard Lourette and Grok</em>
 </p>
 
-**Version 2.7 | December 2025**
+**Version 2.8 | December 2025**
 
 **Author:** Richard W. Lourette  
 **Contact:** rlourette_at_gmail.com  
@@ -25,6 +25,7 @@
 | 2.5 | December 2025 | R. Lourette | Protocol coexistence (Eddystone-EID + Channel Sounding), tag portfolio strategy, mathematical appendix, glossary expansion |
 | 2.6 | December 2025 | R. Lourette | Autonomous mesh creation |
 | 2.7 | December 2025 | R. Lourette | Visual-inertial mesh localization (Section 4.6), unified fiducial/beacon reference nodes, P1 Positioning Engine integration, tiered communication architecture with WiFi HaLow, Location as a Service (LaaS) business model, zero-infrastructure deployment emphasis, OEM hardware/licensed software model |
+| 2.8 | December 2025 | R. Lourette | Starlink backhaul option throughout, AprilTag 36h11 glossary expansion, minor consistency edits |
 
 ---
 
@@ -62,7 +63,7 @@ This white paper proposes a practical path to indoor and asset-level tracking by
 
 2. **Visual-Inertial Enhancement:** Reference nodes combine visual fiducial markers with BLE beacons, enabling forklifts and drones running P1's Positioning Engine to maintain continuous navigation throughout indoor facilities. Camera observations of fiducials provide bearing and range fixes that correct IMU drift, while the mesh self-locates from one or two P1 RTK anchors. A facility can go from bare walls to sub-30cm positioning accuracy in under an hour with no surveying.
 
-3. **Zero-Infrastructure Deployment:** The system requires no facility modifications—no conduit, no cabling, no network drops. Battery-powered nodes mount anywhere with adhesive or magnets. Mains-powered infrastructure nodes plug into existing outlets. Only the P1 gateway requires external connectivity (cellular, Starlink, or Ethernet to Location Cloud); all other nodes communicate wirelessly through the mesh. This dramatically reduces deployment cost and enables temporary, remote, or leased facilities where traditional IT infrastructure is unavailable or impractical.
+3. **Zero-Infrastructure Deployment:** The system requires no facility modifications: no conduit, no cabling, no network drops. Battery-powered nodes mount anywhere with adhesive or magnets. Mains-powered infrastructure nodes plug into existing outlets. Only the P1 gateway requires external connectivity (cellular, Starlink, or Ethernet to Location Cloud); all other nodes communicate wirelessly through the mesh. This dramatically reduces deployment cost and enables temporary, remote, or leased facilities where traditional IT infrastructure is unavailable or impractical.
 
 4. **Tiered Communication Architecture:** Battery-powered relay nodes use Thread for low-power mesh networking, while mains-powered infrastructure nodes use WiFi HaLow (802.11ah) for high-bandwidth aggregation. This prevents Thread bandwidth saturation in large deployments while maintaining years of battery life for edge devices.
 
@@ -631,7 +632,7 @@ When both are available, the vehicle's navigation filter gains redundancy. If on
 
 #### 4.6.2 Vehicle Navigation Architecture
 
-Forklifts, drones, and AGVs operating within the mesh run **P1's Positioning Engine**—the same sensor fusion system that provides centimeter-accurate outdoor navigation. Indoors, the Positioning Engine substitutes visual fiducial observations and BLE Channel Sounding ranges for GNSS satellite signals, using identical Kalman filtering mathematics.
+Forklifts, drones, and AGVs operating within the mesh run **P1's Positioning Engine**, the same sensor fusion system that provides centimeter-accurate outdoor navigation. Indoors, the Positioning Engine substitutes visual fiducial observations and BLE Channel Sounding ranges for GNSS satellite signals, using identical Kalman filtering mathematics.
 
 ```mermaid
 flowchart LR
@@ -737,11 +738,11 @@ The complete deployment sequence requires minimal manual effort and **zero facil
 
 **Step 1: P1 Anchor Installation (minutes)**
 
-Install one or two P1 nodes at locations with sky view (loading docks, exterior doors). These establish the absolute coordinate frame via RTK. This is the only equipment requiring external network connectivity (cellular or Ethernet to Location Cloud).
+Install one or two P1 nodes at locations with sky view (loading docks, exterior doors). These establish the absolute coordinate frame via RTK. This is the only equipment requiring external network connectivity (cellular, Starlink, or Ethernet to Location Cloud).
 
 **Step 2: Reference Node Deployment (hours)**
 
-Mount fiducial/beacon reference nodes throughout the facility on columns, rack uprights, walls, or ceilings. No surveying required—just place and power on. Battery-powered nodes require no wiring; simply attach with adhesive, magnets, or screws.
+Mount fiducial/beacon reference nodes throughout the facility on columns, rack uprights, walls, or ceilings. No surveying required, just place and power on. Battery-powered nodes require no wiring; simply attach with adhesive, magnets, or screws.
 
 **Step 3: Mesh Self-Localization (automatic, minutes)**
 
@@ -838,13 +839,13 @@ The mesh network requires different communication technologies at different tier
 
 **The Thread Bandwidth Challenge**
 
-Thread's 250 kbps is shared across the mesh. A battery-powered relay handling 10 tags at 1 update/second with 100-byte packets consumes only ~8 kbps—well within budget. But a mains-powered infrastructure node aggregating:
+Thread's 250 kbps is shared across the mesh. A battery-powered relay handling 10 tags at 1 update/second with 100-byte packets consumes only ~8 kbps, well within budget. But a mains-powered infrastructure node aggregating:
 
 - 100 asset tag detections × 10/second × 50 bytes = 400 kbps (advertising)
 - 50 CS range measurements × 1/second × 100 bytes = 40 kbps
 - Mesh management overhead = 50 kbps
 
-Total approaches 500 kbps—exceeding Thread's capacity.
+Total approaches 500 kbps, exceeding Thread's capacity.
 
 **Solution: WiFi HaLow (802.11ah) for Infrastructure Tier**
 
@@ -924,9 +925,9 @@ A critical deployment advantage: **only the P1 gateway requires external network
 | Relay nodes | Battery | None (Thread mesh) | Mount anywhere |
 | Reference nodes | Battery | None (BLE + Thread) | Mount on columns/walls |
 | Infrastructure nodes | Mains outlet | None (WiFi HaLow mesh) | Plug into outlet |
-| P1 Gateway | Mains outlet | Cellular or Ethernet | Single external connection |
+| P1 Gateway | Mains outlet | Cellular, Starlink, or Ethernet | Single external connection |
 
-This architecture requires **zero facility modifications**—no conduit runs, no Ethernet drops, no IT infrastructure changes. Battery nodes mount with adhesive, magnets, or zip ties. Mains-powered nodes plug into existing outlets. The P1 gateway's cellular option means even the backhaul connection requires no facility network integration.
+This architecture requires **zero facility modifications**: no conduit runs, no Ethernet drops, no IT infrastructure changes. Battery nodes mount with adhesive, magnets, or zip ties. Mains-powered nodes plug into existing outlets. The P1 gateway's cellular or Starlink option means even the backhaul connection requires no facility network integration.
 
 ---
 
@@ -1072,7 +1073,7 @@ The Location Cloud already manages GNSS devices at scale. Asset beacons and rela
 
 ### 6.1 The LaaS Value Proposition
 
-P1's business model extends naturally from corrections-as-a-service (Polaris RTK subscriptions) to **Location as a Service (LaaS)**—providing accurate, continuous position for any asset, anywhere, through a unified platform.
+P1's business model extends naturally from corrections-as-a-service (Polaris RTK subscriptions) to **Location as a Service (LaaS)**, providing accurate, continuous position for any asset, anywhere, through a unified platform.
 
 | What P1 Provides | Customer Outcome |
 |------------------|------------------|
@@ -1082,7 +1083,7 @@ P1's business model extends naturally from corrections-as-a-service (Polaris RTK
 | Location Cloud API | Single integration point |
 | Device management | Unified fleet + asset visibility |
 
-Customers don't buy hardware and corrections separately—they subscribe to **location** for their assets.
+Customers don't buy hardware and corrections separately; they subscribe to **location** for their assets.
 
 ### 6.2 Subscription Tiers
 
@@ -1198,7 +1199,7 @@ The LaaS model creates multiple barriers to displacement:
 6. **Low-tier volume**: Makes rip-and-replace expensive for competitors
 7. **Upgrade path**: Keeps customers expanding within the P1 ecosystem
 
-Unlike pure-play indoor vendors (Quuppa, Zebra) or outdoor-only solutions, P1 offers **ubiquitous location**—one vendor, one API, one subscription for position anywhere.
+Unlike pure-play indoor vendors (Quuppa, Zebra) or outdoor-only solutions, P1 offers **ubiquitous location**: one vendor, one API, one subscription for position anywhere.
 
 ---
 
@@ -1362,7 +1363,7 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 
 **AGV (Automated Guided Vehicle):** Self-driving material handling equipment used in warehouses and factories for transporting goods without human operators.
 
-**AprilTag:** A visual fiducial system using square black-and-white markers with encoded IDs. Designed for robust detection and precise pose estimation from camera images. Developed at University of Michigan.
+**AprilTag:** A visual fiducial system using square black-and-white markers with encoded IDs. Designed for robust detection and precise pose estimation from camera images. Developed at University of Michigan. The "36h11" family (recommended for this application) uses a 6×6 data grid with 11-bit Hamming distance error correction, providing 587 unique tags with excellent detection reliability and minimal false positives.
 
 **Channel Sounding:** A Bluetooth 6.0 feature that measures distance between devices by analyzing signal characteristics across multiple frequency channels. Achieves 10-centimeter accuracy using phase-based ranging.
 
@@ -1658,7 +1659,7 @@ Richard is a named inventor on 20 U.S. patents and has held DoD Top Secret/SCI c
 
 ---
 
-**Document Version:** 2.7  
+**Document Version:** 2.8  
 **Date:** December 2025
 
 © 2025 Richard W. Lourette. All rights reserved.
