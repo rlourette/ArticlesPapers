@@ -6,11 +6,25 @@
   <em>Image credit: Richard Lourette and Grok</em>
 </p>
 
-**Version 2.6 | December 2025**
+**Version 2.7 | December 2025**
 
 **Author:** Richard W. Lourette  
 **Contact:** rlourette_at_gmail.com  
 **Location:** Fairport, New York, USA
+
+---
+
+## Revision History
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0 | December 2025 | R. Lourette | Initial draft: core architecture, BLE mesh concept |
+| 2.0 | December 2025 | R. Lourette | Added self-locating mesh, Kalman filtering, trilateration |
+| 2.1 | December 2025 | R. Lourette | Enhanced API integration, P1 Tags feature alignment |
+| 2.2 | December 2025 | R. Lourette | Published |
+| 2.5 | December 2025 | R. Lourette | Protocol coexistence (Eddystone-EID + Channel Sounding), tag portfolio strategy, mathematical appendix, glossary expansion |
+| 2.6 | December 2025 | R. Lourette | Autonomous mesh creation |
+| 2.7 | December 2025 | R. Lourette | Visual-inertial mesh localization (Section 4.6), unified fiducial/beacon reference nodes, P1 Positioning Engine integration, tiered communication architecture with WiFi HaLow, Location as a Service (LaaS) business model, zero-infrastructure deployment emphasis, OEM hardware/licensed software model |
 
 ---
 
@@ -22,6 +36,8 @@ Throughout this document:
 - **P1 Tags** refers to the existing metadata/device management feature
 - **Asset Beacons** refers to the proposed physical BLE tracking devices
 - **Relay Nodes** refers to battery-powered gateways that bridge asset beacons to P1's network
+- **Reference Nodes** refers to fiducial/beacon combinations that enable visual-inertial navigation
+- **Infrastructure Nodes** refers to mains-powered aggregation points with high-bandwidth backhaul
 
 This distinction matters: the P1 Tags feature becomes even more valuable when extended to manage tens of thousands of asset beacons alongside GNSS-enabled devices.
 
@@ -31,15 +47,24 @@ This distinction matters: the P1 Tags feature becomes even more valuable when ex
 
 Point One Navigation has built the world's most accessible centimeter-accurate positioning platform. With the Polaris RTK Network, Location Cloud API, and Positioning Engine, P1 delivers precise outdoor location for vehicles, robots, and connected devices. The recent \$35M Series C and stated goal to "solve ubiquitous location...eventually indoors and all domains" signals the next phase of growth.
 
-This white paper proposes a practical path to indoor and asset-level tracking by integrating hybrid BLE-Thread mesh networks with P1's existing infrastructure. The architecture enables:
+This white paper proposes a practical path to indoor and asset-level tracking by integrating hybrid BLE-Thread-WiFi HaLow mesh networks with P1's existing infrastructure. The architecture enables:
 
 - **Seamless outdoor-to-indoor handoff** using P1 gateways as mesh coordinators
 - **Passive asset tracking** for pallets, boxes, and containers without per-item GNSS hardware
 - **Self-locating relay mesh** that automatically derives anchor positions from nearby P1-enabled vehicles, eliminating manual surveying and enabling rapid deployment
+- **Visual-inertial navigation** for forklifts and drones using camera observations of fiducial-equipped reference nodes
 - **Scalable deployment** supporting 100,000+ tracked assets per facility
-- **New revenue streams** through per-device-under-management pricing for non-GNSS assets
+- **Location as a Service (LaaS)** revenue model with predictable recurring subscriptions
 
-**Key Innovation:** The self-locating mesh architecture transforms every P1-enabled vehicle (forklift, tractor, AGV) into a mobile positioning anchor. Using Bluetooth 6.0 Channel Sounding and Kalman filtering, relay nodes automatically derive their positions from passing P1 equipment, then use trilateration to locate asset tags. This eliminates the deployment friction that plagues traditional RTLS systems: no surveying, no per-anchor GNSS hardware, no recalibration when equipment moves.
+**Key Innovations:**
+
+1. **Self-Locating Mesh:** Every P1-enabled vehicle (forklift, tractor, AGV) becomes a mobile positioning anchor. Using Bluetooth 6.0 Channel Sounding and Kalman filtering, relay nodes automatically derive their positions from passing P1 equipment, then use trilateration to locate asset tags. This eliminates the deployment friction that plagues traditional RTLS systems: no surveying, no per-anchor GNSS hardware, no recalibration when equipment moves.
+
+2. **Visual-Inertial Enhancement:** Reference nodes combine visual fiducial markers with BLE beacons, enabling forklifts and drones running P1's Positioning Engine to maintain continuous navigation throughout indoor facilities. Camera observations of fiducials provide bearing and range fixes that correct IMU drift, while the mesh self-locates from one or two P1 RTK anchors. A facility can go from bare walls to sub-30cm positioning accuracy in under an hour with no surveying.
+
+3. **Zero-Infrastructure Deployment:** The system requires no facility modifications—no conduit, no cabling, no network drops. Battery-powered nodes mount anywhere with adhesive or magnets. Mains-powered infrastructure nodes plug into existing outlets. Only the P1 gateway requires external connectivity (cellular, Starlink, or Ethernet to Location Cloud); all other nodes communicate wirelessly through the mesh. This dramatically reduces deployment cost and enables temporary, remote, or leased facilities where traditional IT infrastructure is unavailable or impractical.
+
+4. **Tiered Communication Architecture:** Battery-powered relay nodes use Thread for low-power mesh networking, while mains-powered infrastructure nodes use WiFi HaLow (802.11ah) for high-bandwidth aggregation. This prevents Thread bandwidth saturation in large deployments while maintaining years of battery life for edge devices.
 
 This approach complements P1's roadmap rather than competing with it, providing near-term indoor coverage while P1 develops more sophisticated positioning technologies.
 
@@ -103,26 +128,45 @@ No other RTLS vendor can offer this capability. It requires the combination of w
 
 ### 2.1 System Components
 
-The hybrid architecture introduces two new device classes that integrate with P1's existing platform:
+The hybrid architecture introduces four new device classes that integrate with P1's existing platform:
 
 **Asset Beacons (Coin Cell Powered)**
 - BLE 5.x/6.0 devices attached to pallets, boxes, or containers
 - Transmit encrypted Eddystone-EID or Channel Sounding signals
 - 8-12 month battery life on CR2032
 - Zero configuration required: activate and attach
+- **Installation:** Adhesive backing or zip tie; no infrastructure needed
 - Cost target: \$5-15 per beacon at scale
 
-**Relay Nodes (Battery or Mains Powered)**
+**Relay Nodes (Battery Powered)**
 - Dual-radio devices: BLE scanner + Thread mesh networking
 - Deployed on warehouse ceilings, pallet racks, or vehicle-mounted
-- Forward beacon detections to P1 gateways via Thread mesh
-- Battery-powered versions: 12+ month life on 1200mAh cell
+- Forward beacon detections to infrastructure nodes via Thread mesh
+- Battery-powered: 12+ month life on 1200mAh cell
 - Can incorporate P1's Positioning Engine for precise self-location
+- **Installation:** Magnetic mount, adhesive, or zip tie; no wiring required
+
+**Reference Nodes (Fiducial + Beacon)**
+- Combined visual fiducial marker (AprilTag/ArUco) and BLE 6.0 beacon
+- Self-locating via mesh ranging from P1 anchors
+- Broadcasts computed position for vehicle INS aiding
+- Camera-detectable for visual navigation updates
+- Battery life: 3-5 years
+- **Installation:** Screw mount or adhesive on columns/walls; no wiring required
+- Cost target: \$30-50 per node
+
+**Infrastructure Nodes (Mains Powered)**
+- High-bandwidth aggregation points with WiFi HaLow (802.11ah) connectivity
+- Bridge between Thread mesh edge and P1 gateways
+- Support 50-100+ asset tag detections per second
+- **Installation:** Plug into any standard outlet; no network connection required
+- Cost target: \$100-200 per node
 
 **P1 Gateways (Existing + Enhanced)**
-- Thread Border Router functionality added to P1 devices
-- Bridge between Thread mesh and P1's Location Cloud API
+- WiFi HaLow access point functionality added to P1 devices
+- Bridge between facility mesh and P1's Location Cloud API
 - Provide GNSS-derived position context for all detections
+- **Installation:** Single device requiring external connectivity (cellular, Starlink, or Ethernet)
 - Existing P1 customers already have gateway hardware deployed
 
 ### 2.2 Data Flow
@@ -135,8 +179,12 @@ flowchart LR
         AB[/"🏷️ Asset Beacon<br/>(BLE)"/]
     end
     
-    subgraph Mesh["Mesh Network"]
+    subgraph Edge["Edge Mesh"]
         RN[["📡 Relay Node<br/>(Thread)"]]
+    end
+    
+    subgraph Aggregation["Aggregation Layer"]
+        INF[["📶 Infrastructure Node<br/>(WiFi HaLow)"]]
     end
     
     subgraph Infrastructure["P1 Infrastructure"]
@@ -148,31 +196,35 @@ flowchart LR
         DASH["📊 Dashboard"]
     end
     
-    AB -->|"Encrypted ID +<br/>Channel Sounding"| RN
-    RN -->|"Mesh routing +<br/>EID resolution"| GW
-    GW -->|"GNSS-anchored<br/>detections"| API
+    AB -->|"BLE CS +<br/>Eddystone-EID"| RN
+    RN -->|"Thread<br/>250 kbps"| INF
+    INF -->|"WiFi HaLow<br/>2-30 Mbps"| GW
+    GW -->|"HTTPS/WSS"| API
     API -->|"Real-time<br/>events"| DASH
     
     style AB fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b
     style RN fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+    style INF fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,color:#1a237e
     style GW fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20
     style API fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
     style DASH fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
     
     style Sources fill:#e3f2fd,stroke:#1976d2,stroke-width:1px
-    style Mesh fill:#f3e5f5,stroke:#8e24aa,stroke-width:1px
+    style Edge fill:#f3e5f5,stroke:#8e24aa,stroke-width:1px
+    style Aggregation fill:#e8eaf6,stroke:#5c6bc0,stroke-width:1px
     style Infrastructure fill:#e8f5e9,stroke:#43a047,stroke-width:1px
     style Customer fill:#fce4ec,stroke:#d81b60,stroke-width:1px
 ```
 
 **Data Flow Summary:**
 
-| Component | Function | Key Capability |
-|-----------|----------|----------------|
-| **Asset Beacon** | Transmits identity | Encrypted Eddystone-EID, optional Channel Sounding range |
-| **Relay Node** | Bridges BLE→Thread | Mesh routing, local EID resolution, battery-powered |
-| **P1 Gateway** | Anchors to Polaris | Centimeter-accurate GNSS position via RTK corrections |
-| **Location Cloud** | Aggregates & serves | GraphQL API, real-time subscriptions, device management |
+| Component | Function | Protocol | Bandwidth |
+|-----------|----------|----------|-----------|
+| **Asset Beacon** | Transmits identity + ranging | BLE 6.0 | ~1 Mbps burst |
+| **Relay Node** | Edge aggregation | Thread | 250 kbps shared |
+| **Infrastructure Node** | High-bandwidth aggregation | WiFi HaLow | 2-30 Mbps |
+| **P1 Gateway** | Cloud backhaul + RTK anchor | Cellular/Ethernet | 10+ Mbps |
+| **Location Cloud** | Aggregates & serves | HTTPS/GraphQL | Unlimited |
 
 **Detection Event Payload:**
 - Asset beacon identifier (resolved from rotating EID)
@@ -185,9 +237,9 @@ flowchart LR
 
 **Leverages P1's existing infrastructure:** Gateways already deployed for GNSS correction delivery become mesh coordinators. The Location Cloud API already handles device management, telemetry, and customer queries. Asset beacon detections are simply a new event type.
 
-**Separates concerns appropriately:** Ultra-low-power beacons do one thing well (transmit identity). Relay nodes handle the complexity of mesh networking. P1's cloud handles resolution, aggregation, and customer integration.
+**Separates concerns appropriately:** Ultra-low-power beacons do one thing well (transmit identity). Relay nodes handle the complexity of mesh networking. Infrastructure nodes provide bandwidth aggregation. P1's cloud handles resolution, aggregation, and customer integration.
 
-**Scales efficiently:** Thread mesh provides coverage redundancy and self-healing. Adding relay nodes extends coverage without cloud changes. The system handles 100,000+ assets per facility.
+**Scales efficiently:** Thread mesh provides coverage redundancy and self-healing at the edge. WiFi HaLow prevents bandwidth bottlenecks at aggregation points. The system handles 100,000+ assets per facility.
 
 ---
 
@@ -198,10 +250,10 @@ P1 gateways become the bridge between GNSS-accurate outdoor positioning and indo
 ### 3.1 Fixed Infrastructure
 
 **Warehouse Ceilings**
-- Mains-powered gateways with Thread Border Router capability
+- Mains-powered gateways with WiFi HaLow access point capability
 - Polaris RTK corrections provide survey-grade self-location (centimeter-accurate facility reference point)
-- Aggregate detections from battery-powered relay nodes on rack ends
-- Typical density: 1 gateway per 10,000 sq ft, relay nodes every 50 ft
+- Aggregate detections from infrastructure nodes throughout facility
+- Typical density: 1 gateway per 50,000 sq ft, infrastructure nodes every 100 ft, relay nodes every 50 ft
 
 **Distribution Center Docks**
 - Track asset handoff between transport and storage
@@ -283,6 +335,8 @@ sequenceDiagram
 
 This approach transforms every P1-enabled vehicle into a mobile positioning anchor, extending RTK-grade accuracy from the vehicle to the assets around it. The technical details of position estimation, including Kalman filtering, trilateration, and self-locating mesh algorithms, are covered in Section 4.4.
 
+For deployments with camera-equipped vehicles (forklifts, drones, AGVs), reference nodes can include visual fiducial markers that provide an additional position observation source. See Section 4.6 for the visual-inertial architecture that leverages both radio and camera-based position updates.
+
 ---
 
 ## 4. Enabling Technologies
@@ -305,7 +359,7 @@ Channel Sounding means the system can answer "pallet X is 2.3 meters from relay 
 
 ### 4.2 Thread / Matter over Thread
 
-Thread provides the mesh backhaul for relay node communication:
+Thread provides the mesh backhaul for battery-powered relay node communication:
 
 **IPv6 Native:** Direct integration with P1's GraphQL API without protocol translation. Thread devices get routable IP addresses.
 
@@ -314,6 +368,8 @@ Thread provides the mesh backhaul for relay node communication:
 **Low Power:** Thread Sleepy End Devices can achieve multi-year battery life while maintaining mesh connectivity.
 
 **Industry Momentum:** IKEA announced 21 Matter-over-Thread devices (November 2025). Apple, Google, Amazon all shipping Thread Border Routers. Nordic and Silicon Labs have mature OpenThread implementations.
+
+**Bandwidth Limitation:** Thread's 250 kbps is shared across the mesh. This is adequate for battery-powered relay nodes handling 10-20 nearby tags, but insufficient for mains-powered infrastructure nodes aggregating hundreds of detections per second. See Section 4.7 for the tiered communication architecture that addresses this.
 
 ### 4.3 Eddystone-EID for Privacy and Security
 
@@ -452,6 +508,10 @@ flowchart TB
 | **Anchor hardware cost** | \$500-2000/anchor | \$50-100/relay node |
 | **Position updates** | Static (requires re-survey) | Dynamic (continuous refinement) |
 | **Mobile deployments** | Difficult | Native capability |
+| **Facility modifications** | Conduit, cabling, network drops | None (wireless mesh) |
+| **External connectivity** | Per-anchor or controller | Single P1 gateway only |
+
+The self-locating mesh can be further enhanced when mobile platforms carry cameras. By integrating visual fiducial markers into reference nodes, vehicles gain an additional observation source for INS aiding. This visual-inertial approach is detailed in Section 4.6.
 
 ### 4.5 Protocol Coexistence on Asset Tags
 
@@ -515,6 +575,358 @@ This protocol flexibility enables a tiered product strategy:
 | **Precision** | Eddystone-EID + CS + IMU | Centimeter (±0.1m) | 12-18 months | \$25-40 | High-value assets, AGV coordination |
 
 All tiers share the same secure identity infrastructure and Location Cloud integration. The difference lies in positioning accuracy and hardware cost, allowing customers to match tag capability to asset value.
+
+### 4.6 Visual-Inertial Mesh Localization
+
+This section describes how camera-equipped vehicles (forklifts, drones, AGVs) can leverage visual observations of fiducial-equipped reference nodes to maintain continuous, drift-free navigation throughout indoor facilities using P1's Positioning Engine.
+
+#### 4.6.1 Unified Fiducial/Beacon Reference Nodes
+
+The self-locating mesh architecture is enhanced by combining visual fiducial markers with BLE 6.0 beacons into unified reference nodes. This dual-mode approach provides redundant position observation sources for mobile platforms operating within the mesh.
+
+**Integrated Reference Node Design**
+
+```mermaid
+flowchart TB
+    subgraph RefNode["Unified Reference Node"]
+        direction TB
+        VIS["Visual Fiducial<br/>(AprilTag/ArUco)<br/>Encodes Node ID"]
+        BLE["BLE 6.0 Beacon<br/>• Broadcasts Position<br/>• CS Reflector<br/>• Mesh Participant"]
+        BAT["Battery: 3-5 Years"]
+    end
+    
+    subgraph Functions["Dual Functions"]
+        F1["Mesh Self-Location<br/>(peer-to-peer CS ranging)"]
+        F2["Vehicle INS Aiding<br/>(camera observation)"]
+        F3["Position Broadcast<br/>(BLE advertisement)"]
+    end
+    
+    RefNode --> F1
+    RefNode --> F2
+    RefNode --> F3
+    
+    style RefNode fill:#e3f2fd,stroke:#1976d2
+    style VIS fill:#fff3e0,stroke:#f57c00
+    style BLE fill:#e8f5e9,stroke:#43a047
+```
+
+Each reference node serves three functions:
+
+| Function | Mechanism | Benefit |
+|----------|-----------|---------|
+| Mesh participant | BLE CS ranging to P1 anchor and peer nodes | Self-locates without surveying |
+| Position broadcaster | BLE advertisement with computed coordinates | Vehicles receive position instantly |
+| Visual landmark | Camera-detectable fiducial pattern | INS aiding for drift correction |
+
+**Why Dual-Mode Matters**
+
+Camera and radio provide complementary observation characteristics:
+
+| Observation Source | Strengths | Limitations |
+|-------------------|-----------|-------------|
+| Camera + Fiducial | Accurate bearing and elevation; works in RF-noisy environments | Requires line-of-sight; affected by lighting |
+| BLE Channel Sounding | Works without line-of-sight; consistent in varying light | Subject to multipath; requires radio |
+
+When both are available, the vehicle's navigation filter gains redundancy. If one modality fails (camera occluded, BLE interference), the other maintains position continuity.
+
+#### 4.6.2 Vehicle Navigation Architecture
+
+Forklifts, drones, and AGVs operating within the mesh run **P1's Positioning Engine**—the same sensor fusion system that provides centimeter-accurate outdoor navigation. Indoors, the Positioning Engine substitutes visual fiducial observations and BLE Channel Sounding ranges for GNSS satellite signals, using identical Kalman filtering mathematics.
+
+```mermaid
+flowchart LR
+    subgraph Sensors["Onboard Sensors"]
+        IMU["IMU<br/>(100+ Hz)"]
+        CAM["Camera<br/>(30 Hz)"]
+        BLE["BLE 6.0 CS<br/>(1-10 Hz)"]
+        WHEEL["Wheel Odometry<br/>(50 Hz)"]
+    end
+    
+    subgraph External["External References"]
+        P1_RTK["P1 RTK<br/>(outdoor)"]
+        REF["Reference Nodes<br/>(indoor)"]
+    end
+    
+    subgraph Filter["P1 Positioning Engine"]
+        STATE["State Vector:<br/>• Position (x,y,z)<br/>• Velocity<br/>• Attitude<br/>• Sensor Biases"]
+    end
+    
+    subgraph Output["Outputs"]
+        POS["Vehicle Position<br/>(continuous)"]
+        DONATE["Position Donation<br/>(to mesh)"]
+    end
+    
+    IMU --> Filter
+    CAM --> Filter
+    BLE --> Filter
+    WHEEL --> Filter
+    P1_RTK --> Filter
+    REF --> Filter
+    
+    Filter --> POS
+    Filter --> DONATE
+    
+    style Filter fill:#c8e6c9,stroke:#43a047,stroke-width:2px
+```
+
+**Why P1's Positioning Engine**
+
+This architecture leverages P1's core technology investment rather than building parallel systems:
+
+| Capability | Outdoor (Current) | Indoor (Proposed) |
+|------------|-------------------|-------------------|
+| Primary aiding source | GNSS satellites | Visual fiducials + BLE CS |
+| Correction source | Polaris RTK network | Self-locating mesh |
+| Sensor fusion | P1 Positioning Engine | P1 Positioning Engine |
+| Output API | Location Cloud GraphQL | Location Cloud GraphQL |
+
+The Positioning Engine already handles IMU integration, outlier rejection, and multi-source fusion. Adding camera and BLE observation types extends its capability without architectural changes.
+
+**Observation Sources by Environment**
+
+| Environment | Primary Aiding | Secondary Aiding | IMU Role |
+|-------------|---------------|------------------|----------|
+| Outdoor (sky view) | P1 RTK GNSS | Wheel odometry | Bridge brief outages |
+| Transition (dock door) | RTK → Reference nodes | Camera fiducials | Smooth handoff |
+| Indoor (warehouse) | Camera fiducials | BLE CS to reference nodes | Dead reckon between fixes |
+| Indoor (obstructed) | BLE CS ranging | — | Extended dead reckoning |
+
+#### 4.6.3 Camera-Based Position Update
+
+When the vehicle camera detects a fiducial on a reference node, the navigation filter performs a measurement update:
+
+**Observation Extraction**
+
+From camera image:
+- Node ID (decoded from fiducial pattern)
+- Bearing (horizontal angle from camera centerline)
+- Elevation (vertical angle from camera centerline)
+- Range estimate (from apparent fiducial size)
+- Relative orientation (fiducial face normal)
+
+From reference node broadcast:
+- Node position (X, Y, Z) in facility frame
+- Position uncertainty (from mesh solution)
+
+**Measurement Model**
+
+The filter compares observed bearing/elevation/range against predicted values computed from the current state estimate and known node position:
+
+```
+Predicted bearing   = atan2(Ynode - Yvehicle, Xnode - Xvehicle) - yaw
+Predicted elevation = atan2(Znode - Zvehicle, horizontal_distance)
+Predicted range     = sqrt((ΔX)² + (ΔY)² + (ΔZ)²)
+
+Innovation = Observed - Predicted
+```
+
+The Kalman gain weights the correction based on observation quality (image sharpness, range confidence) and current state uncertainty. Poor observations have minimal impact; high-quality observations snap the estimate to ground truth.
+
+**Accuracy Characteristics**
+
+| Observation | Typical Accuracy | Notes |
+|-------------|-----------------|-------|
+| Bearing from image | ±0.5° | Limited by camera resolution and calibration |
+| Elevation from image | ±0.5° | Same factors as bearing |
+| Range from fiducial size | ±5-10% | Degrades with distance; augmented by BLE CS |
+| Combined position fix | ±10-30cm | With reference node position known to ±20cm |
+
+#### 4.6.4 Facility Self-Mapping Sequence
+
+The complete deployment sequence requires minimal manual effort and **zero facility modifications**:
+
+**Step 1: P1 Anchor Installation (minutes)**
+
+Install one or two P1 nodes at locations with sky view (loading docks, exterior doors). These establish the absolute coordinate frame via RTK. This is the only equipment requiring external network connectivity (cellular or Ethernet to Location Cloud).
+
+**Step 2: Reference Node Deployment (hours)**
+
+Mount fiducial/beacon reference nodes throughout the facility on columns, rack uprights, walls, or ceilings. No surveying required—just place and power on. Battery-powered nodes require no wiring; simply attach with adhesive, magnets, or screws.
+
+**Step 3: Mesh Self-Localization (automatic, minutes)**
+
+```mermaid
+sequenceDiagram
+    participant P1 as P1 Node<br/>(RTK Anchor)
+    participant R1 as Reference<br/>Node 1
+    participant R2 as Reference<br/>Node 2
+    participant R3 as Reference<br/>Node 3
+    participant Cloud as Location<br/>Cloud
+
+    Note over P1: Position known<br/>via RTK
+    
+    P1->>R1: CS Range: 12.3m
+    P1->>R2: CS Range: 18.7m
+    
+    R1->>R2: CS Range: 8.2m
+    R1->>R3: CS Range: 15.1m
+    R2->>R3: CS Range: 11.4m
+    
+    R1->>Cloud: Range observations
+    R2->>Cloud: Range observations
+    R3->>Cloud: Range observations
+    
+    Cloud->>Cloud: Graph optimization
+    
+    Cloud->>R1: Position: (X1, Y1, Z1)
+    Cloud->>R2: Position: (X2, Y2, Z2)
+    Cloud->>R3: Position: (X3, Y3, Z3)
+    
+    Note over R1,R3: All nodes now know<br/>their positions
+```
+
+Reference nodes within range of the P1 anchor get direct position fixes. Nodes beyond P1 range derive positions through peer-to-peer ranging. The graph optimization (running in Location Cloud) solves for globally consistent positions across the entire mesh.
+
+**Step 4: Vehicle Operation (continuous)**
+
+Vehicles with cameras observe fiducials as they operate. Each observation:
+- Updates the vehicle's INS state
+- Optionally contributes a "reverse observation" that can refine the reference node's position
+- Enables the vehicle to range to and locate asset tags
+
+**Convergence Timeline**
+
+| Milestone | Time | Accuracy |
+|-----------|------|----------|
+| P1 anchor online | Immediate | RTK (±2cm) |
+| Nearby nodes positioned | 1-5 minutes | ±30-50cm |
+| Full mesh converged | 5-30 minutes | ±20-30cm throughout |
+| Vehicle operation refining mesh | Ongoing | ±10-20cm (improves over days) |
+
+#### 4.6.5 Practical Considerations
+
+**Reference Node Placement**
+
+| Location | Advantages | Considerations |
+|----------|------------|----------------|
+| Column faces | Visible from aisles; protected from impacts | Multiple faces may need nodes for full coverage |
+| Rack uprights | Regular spacing; existing structure | May be occluded by inventory |
+| Ceiling | Unobstructed view; ideal for drones | Requires ladder/lift for installation |
+| Wall-mounted | Easy installation; good for perimeter | Limited coverage depth |
+
+**Fiducial Design Requirements**
+
+- Unique ID encoded in visual pattern (AprilTag 36h11 or ArUco dictionary)
+- Minimum size for detection at 10-20m range: ~15-20cm
+- High contrast (black/white) for robust detection in variable lighting
+- ID matches beacon's BLE identifier for unambiguous association
+
+**Camera Requirements (vehicle-mounted)**
+
+| Parameter | Minimum | Recommended |
+|-----------|---------|-------------|
+| Resolution | 640×480 | 1280×720 or higher |
+| Frame rate | 15 fps | 30 fps |
+| Field of view | 60° horizontal | 90°+ (wide angle) |
+| Mounting | Fixed, forward-facing | Multiple cameras for 360° coverage |
+
+**Power Budget (reference node)**
+
+| Component | Active | Sleep | Duty Cycle | Average |
+|-----------|--------|-------|------------|---------|
+| BLE advertising | 15mA | — | 0.1% | 15µA |
+| CS reflector | 20mA | — | 0.05% | 10µA |
+| Mesh ranging | 25mA | — | 0.1% | 25µA |
+| Processor | 5mA | 2µA | 0.5% | 30µA |
+| **Total** | | | | **~80µA** |
+
+At 80µA average, a 2000mAh battery provides 3+ years of operation.
+
+### 4.7 Tiered Communication Architecture
+
+The mesh network requires different communication technologies at different tiers, matched to power availability and data throughput requirements.
+
+**The Thread Bandwidth Challenge**
+
+Thread's 250 kbps is shared across the mesh. A battery-powered relay handling 10 tags at 1 update/second with 100-byte packets consumes only ~8 kbps—well within budget. But a mains-powered infrastructure node aggregating:
+
+- 100 asset tag detections × 10/second × 50 bytes = 400 kbps (advertising)
+- 50 CS range measurements × 1/second × 100 bytes = 40 kbps
+- Mesh management overhead = 50 kbps
+
+Total approaches 500 kbps—exceeding Thread's capacity.
+
+**Solution: WiFi HaLow (802.11ah) for Infrastructure Tier**
+
+```mermaid
+flowchart TB
+    subgraph Cloud["P1 Location Cloud"]
+        API["GraphQL API"]
+    end
+    
+    subgraph Infrastructure["Infrastructure Tier (Mains Powered)"]
+        GW["P1 Gateway<br/>Cellular/Ethernet"]
+        INF1["Infrastructure Node<br/>WiFi HaLow"]
+        INF2["Infrastructure Node<br/>WiFi HaLow"]
+    end
+    
+    subgraph Relay["Relay Tier (Battery Powered)"]
+        REL1["Relay Node<br/>Thread"]
+        REL2["Relay Node<br/>Thread"]
+        REL3["Relay Node<br/>Thread"]
+    end
+    
+    subgraph Asset["Asset Tier (Coin Cell)"]
+        TAG1["Asset Tag<br/>BLE 6.0"]
+        TAG2["Asset Tag<br/>BLE 6.0"]
+        TAG3["Asset Tag<br/>BLE 6.0"]
+        TAG4["Asset Tag<br/>BLE 6.0"]
+    end
+    
+    API <-->|"HTTPS/WSS"| GW
+    GW <-->|"WiFi HaLow<br/>2-30 Mbps"| INF1
+    GW <-->|"WiFi HaLow"| INF2
+    
+    INF1 <-->|"Thread<br/>250 kbps"| REL1
+    INF1 <-->|"Thread"| REL2
+    INF2 <-->|"Thread"| REL3
+    
+    REL1 <-.->|"BLE CS"| TAG1
+    REL1 <-.->|"BLE CS"| TAG2
+    REL2 <-.->|"BLE CS"| TAG3
+    REL3 <-.->|"BLE CS"| TAG4
+    
+    style Cloud fill:#fff3e0,stroke:#f57c00
+    style GW fill:#c8e6c9,stroke:#43a047,stroke-width:2px
+    style INF1 fill:#e3f2fd,stroke:#1976d2
+    style INF2 fill:#e3f2fd,stroke:#1976d2
+```
+
+**Protocol Selection by Tier**
+
+| Tier | Power Source | Protocol | Bandwidth | Rationale |
+|------|--------------|----------|-----------|-----------|
+| Asset tags | Coin cell | BLE 6.0 | ~1 Mbps burst | Lowest power; broadcast + CS reflector only |
+| Battery relays | AA/18650 | Thread | 250 kbps | Low power mesh; handles 10-20 nearby tags |
+| Infrastructure nodes | Mains | WiFi HaLow | 2-30 Mbps | Aggregates 50-100+ tags; needs bandwidth |
+| P1 Gateway | Mains | Cellular/Ethernet | 10+ Mbps | Cloud backhaul; existing P1 infrastructure |
+
+**WiFi HaLow (802.11ah) Benefits**
+
+| Feature | Specification | Benefit |
+|---------|---------------|---------|
+| Frequency | Sub-1 GHz (902-928 MHz US) | 10× range vs 2.4 GHz; better wall penetration |
+| Bandwidth | 1-8 MHz channels | 150 kbps to 30+ Mbps depending on range |
+| Range | 100m-1km+ | Single AP covers large facility |
+| Device capacity | 8,191 per AP | Scales to large deployments |
+| Protocol | Native IPv6 | Direct cloud connectivity; no translation |
+| Security | WPA3 | Enterprise-grade encryption |
+
+Infrastructure nodes form a WiFi HaLow mesh among themselves, with one or more P1 gateways providing backhaul to Location Cloud. This eliminates the Thread bandwidth bottleneck while maintaining the low-power Thread mesh for battery-operated relay nodes.
+
+**Connectivity Model**
+
+A critical deployment advantage: **only the P1 gateway requires external network connectivity**. All other nodes communicate exclusively through the wireless mesh:
+
+| Node Type | Power | Network Connection | Installation |
+|-----------|-------|-------------------|--------------|
+| Asset tags | Coin cell | None (BLE broadcast) | Attach to asset |
+| Relay nodes | Battery | None (Thread mesh) | Mount anywhere |
+| Reference nodes | Battery | None (BLE + Thread) | Mount on columns/walls |
+| Infrastructure nodes | Mains outlet | None (WiFi HaLow mesh) | Plug into outlet |
+| P1 Gateway | Mains outlet | Cellular or Ethernet | Single external connection |
+
+This architecture requires **zero facility modifications**—no conduit runs, no Ethernet drops, no IT infrastructure changes. Battery nodes mount with adhesive, magnets, or zip ties. Mains-powered nodes plug into existing outlets. The P1 gateway's cellular option means even the backhaul connection requires no facility network integration.
 
 ---
 
@@ -656,41 +1068,79 @@ The Location Cloud already manages GNSS devices at scale. Asset beacons and rela
 
 ---
 
-## 6. Business Model
+## 6. Business Model: Location as a Service
 
-### 6.1 Revenue Streams
+### 6.1 The LaaS Value Proposition
 
-**Per-Device-Under-Management (Non-GNSS Assets)**
-- Monthly fee per active asset beacon
-- Tiered pricing: \$0.50-2.00/beacon/month based on volume
-- 100,000 beacons at \$1/month = \$1.2M ARR per large customer
+P1's business model extends naturally from corrections-as-a-service (Polaris RTK subscriptions) to **Location as a Service (LaaS)**—providing accurate, continuous position for any asset, anywhere, through a unified platform.
 
-**Relay Node Hardware**
-- P1-certified relay nodes sold through channel partners
-- Margin on hardware + recurring Location Cloud fees
-- Reference designs available for OEM integration
+| What P1 Provides | Customer Outcome |
+|------------------|------------------|
+| RTK corrections network | Centimeter outdoor accuracy |
+| Self-locating indoor mesh | Sub-meter indoor accuracy |
+| Positioning Engine | Seamless indoor/outdoor handoff |
+| Location Cloud API | Single integration point |
+| Device management | Unified fleet + asset visibility |
 
-**Gateway Enhancement**
-- Software upgrade to existing P1 gateways for Thread Border Router
-- Included in enterprise tier or separate add-on
+Customers don't buy hardware and corrections separately—they subscribe to **location** for their assets.
 
-**Professional Services**
-- Facility planning and deployment
-- Custom integration with WMS/ERP systems
-- Ongoing optimization and support
+### 6.2 Subscription Tiers
 
-### 6.2 Customer Value Proposition
+| Tier | Coverage | Accuracy | Example Use Case | Price Model |
+|------|----------|----------|------------------|-------------|
+| **Outdoor** | GNSS coverage | ±2cm (RTK) | Fleet vehicles, tractors | Per vehicle/month |
+| **Facility** | Single site | ±30cm indoor | Warehouse, factory | Per facility/month |
+| **Enterprise** | Multi-site | Full spectrum | Logistics network | Per asset under management |
 
-**For Existing P1 Fleet Customers:**
-"You already know where your trucks are. Now know what's on them, and where it goes when it leaves the truck."
+**Facility Subscription Example**
 
-**For Warehouse/Logistics Operators:**
-"Centimeter-accurate outdoor meets comprehensive indoor. One platform, one API, one vendor."
+A 100,000 sqft warehouse with:
+- 2 P1 anchor nodes (loading docks)
+- 50 reference nodes (fiducial + beacon)
+- 10 infrastructure nodes (WiFi HaLow)
+- 5,000 asset tags
 
-**For Supply Chain Visibility:**
-"Track anything, anywhere, anytime, from manufacturer to distribution center to delivery vehicle to final destination."
+**Traditional Model (Hardware + Per-Device):**
+```
+Hardware: $75,000 one-time
+Software: $5,000/month (5,000 tags × $1)
+Year 1 total: $135,000
+```
 
-### 6.3 Tag Portfolio Strategy
+**LaaS Model:**
+```
+Facility subscription: $8,000/month
+Includes: Hardware lease, maintenance, software, support
+3-year commitment: $288,000 total
+```
+
+The LaaS model:
+- Lowers customer barrier to entry (no CapEx)
+- Creates predictable recurring revenue for P1
+- Aligns incentives (P1 benefits from system reliability)
+- Enables technology refresh without customer repurchase
+
+### 6.3 Revenue Composition
+
+```mermaid
+pie title P1 Location Revenue Mix (Projected Year 3)
+    "Outdoor RTK Subscriptions" : 40
+    "Indoor Facility Subscriptions" : 25
+    "Asset Tracking (per-tag)" : 20
+    "Professional Services" : 10
+    "Hardware Sales" : 5
+```
+
+**Key Metrics**
+
+| Metric | Target |
+|--------|--------|
+| Monthly recurring revenue per facility | \$5,000-15,000 |
+| Asset tag attach rate (existing customers) | 60%+ |
+| Gross margin (LaaS) | 70-80% |
+| Customer lifetime value | 5+ years |
+
+### 6.4 Tag Portfolio Strategy
 
 The protocol coexistence described in Section 4.5 enables a deliberate product tiering strategy that balances market penetration with margin optimization.
 
@@ -710,26 +1160,45 @@ A typical large customer deployment follows a predictable progression:
 2. **Rollout (5,000-20,000 tags):** Majority Basic for broad coverage, Standard for high-value zones
 3. **Optimization (ongoing):** Precision tags added for specific use cases (dock doors, AGV handoff points)
 
-**Unit Economics Example (10,000 tag deployment)**
+### 6.5 Hardware and Software Model
 
-| Component | Quantity | Unit Price | Revenue | Gross Margin |
-|-----------|----------|------------|---------|--------------|
-| Basic tags | 6,500 | \$6 | \$39,000 | 40% |
-| Standard tags | 3,000 | \$15 | \$45,000 | 50% |
-| Precision tags | 500 | \$32 | \$16,000 | 55% |
-| **Hardware total** | 10,000 | | **\$100,000** | **47%** |
-| Monthly subscription | 10,000 | \$1.00 | \$10,000/mo | 85% |
-| **Year 1 total** | | | **\$220,000** | **62%** |
+The system follows an **OEM hardware with licensed software** model:
 
-The recurring subscription revenue transforms hardware margin into a SaaS-like model. By year two, cumulative subscription revenue exceeds hardware revenue, establishing predictable ARR growth.
+**Hardware:** Asset tags, relay nodes, reference nodes, and infrastructure nodes are manufactured by OEM partners using P1-certified reference designs. This approach:
+- Leverages existing BLE/Thread/WiFi HaLow silicon ecosystems (Nordic, Silicon Labs, Qualcomm)
+- Enables competitive hardware pricing through volume manufacturing
+- Allows regional sourcing and customization
+- Keeps P1 focused on software differentiation
 
-**Competitive Moat**
+**Software:** P1 licenses the embedded firmware, cloud platform, and APIs:
+- Positioning Engine firmware for reference nodes and vehicle integration
+- Location Cloud subscription for data aggregation, analytics, and customer API
+- Device management and provisioning tools
+- Mesh optimization algorithms
 
-This tiered approach creates multiple barriers to displacement:
+**Revenue Split (Typical):**
+| Component | P1 Revenue | Notes |
+|-----------|------------|-------|
+| Hardware margin | 0-10% | Pass-through or small markup |
+| Firmware license | Per device | One-time or included in subscription |
+| Cloud subscription | Monthly/annual | Primary recurring revenue |
+| Professional services | Project-based | Deployment, integration, custom development |
 
-- **Low-tier volume** makes rip-and-replace expensive for competitors
-- **Platform lock-in** through Location Cloud integration and unified API
-- **Upgrade path** keeps customers expanding within the P1 ecosystem rather than evaluating alternatives
+This model aligns P1's incentives with customer success: P1 earns recurring revenue from a working, reliable system rather than one-time hardware sales.
+
+### 6.6 Competitive Moat
+
+The LaaS model creates multiple barriers to displacement:
+
+1. **Infrastructure investment**: Customer has P1 hardware deployed throughout facility
+2. **Integration depth**: WMS/ERP connected via Location Cloud API
+3. **Data history**: Years of location analytics in P1 platform
+4. **Switching cost**: Would require parallel deployment during transition
+5. **Unified platform**: Competitors would need to match both outdoor RTK and indoor mesh
+6. **Low-tier volume**: Makes rip-and-replace expensive for competitors
+7. **Upgrade path**: Keeps customers expanding within the P1 ecosystem
+
+Unlike pure-play indoor vendors (Quuppa, Zebra) or outdoor-only solutions, P1 offers **ubiquitous location**—one vendor, one API, one subscription for position anywhere.
 
 ---
 
@@ -767,7 +1236,7 @@ Cellular trackers have higher per-device cost and power consumption:
 ## 8. Implementation Roadmap
 
 ### Phase 1: Reference Design (Q1 2026)
-- Thread Border Router firmware for existing P1 gateways
+- WiFi HaLow access point firmware for existing P1 gateways
 - Reference relay node design (Nordic nRF54L15 + Thread)
 - Asset beacon specification (BLE 5.x, Eddystone-EID)
 - Location Cloud API extensions for asset events
@@ -777,19 +1246,28 @@ Cellular trackers have higher per-device cost and power consumption:
 - BLE 6.0 Channel Sounding support in relay nodes
 - Distance-based positioning algorithms
 - Zone definition and geofencing in Location Cloud
+- Reference node design with integrated fiducial markers
+- Vehicle camera interface specification
 - Expanded pilot: warehouse + fleet integration
 
-### Phase 3: General Availability (Q4 2026)
-- P1-certified relay node and beacon products
+### Phase 3: Visual-Inertial Integration (Q3-Q4 2026)
+- P1 Positioning Engine indoor aiding sources (camera, BLE CS)
+- INS aiding algorithms for forklift and drone platforms
+- Multi-camera vehicle configurations
+- Real-time mesh refinement from vehicle observations
+- WiFi HaLow infrastructure node product
+
+### Phase 4: General Availability (Q1 2027)
+- P1-certified relay node, reference node, and beacon products
 - Partner ecosystem for deployment services
 - Full documentation and developer resources
-- Enterprise pricing and support tiers
+- Location as a Service pricing and support tiers
 
 ---
 
 ## 9. Conclusion
 
-Point One Navigation has stated its ambition clearly: ubiquitous location, indoors and all domains. The hybrid BLE-Thread architecture proposed here provides a practical, near-term path to that goal while generating new revenue from asset tracking.
+Point One Navigation has stated its ambition clearly: ubiquitous location, indoors and all domains. The hybrid BLE-Thread-WiFi HaLow architecture proposed here provides a practical, near-term path to that goal while generating new revenue from Location as a Service.
 
 The key insight is that P1 already has the hard parts solved:
 
@@ -797,12 +1275,13 @@ The key insight is that P1 already has the hard parts solved:
 - Enterprise-grade Location Cloud API and device management
 - Trusted relationships with fleet and logistics customers
 - The P1 Tags feature for customer-native integration
+- P1 Positioning Engine for sensor fusion across diverse aiding sources
 
 Adding indoor mesh networking and asset beacon support extends these strengths into new markets. Polaris provides the geographic truth; the mesh network extends that truth indoors to every pallet, container, and asset.
 
-The opportunity is significant: every P1 fleet customer is also a potential asset tracking customer. Every pallet on every truck, every container in every warehouse, every package in transit, all manageable through a single platform, all anchored to Polaris-grade positioning.
+The opportunity is significant: every P1 fleet customer is also a potential Location as a Service customer. Every pallet on every truck, every container in every warehouse, every package in transit, all manageable through a single platform, all anchored to Polaris-grade positioning.
 
-**P1 provides the location, network, and integration layer. Customers track anything, anywhere, anytime.**
+**P1 provides the location. Customers subscribe to ubiquitous visibility.**
 
 ---
 
@@ -850,27 +1329,40 @@ The opportunity is significant: every P1 fleet customer is also a potential asse
 12. **IKEA** (November 2025). "IKEA launches new smart home range with 21 Matter-compatible products." Press release. Retrieved from: https://www.ikea.com/global/en/newsroom/retail/the-new-smart-home-from-ikea-matter-compatible-251106/
     - Source for: Industry adoption momentum, 21 Matter-over-Thread devices
 
+### WiFi HaLow Sources
+
+13. **Wireless Broadband Alliance** (January 2024). "Wi-Fi HaLow for IoT Program." White paper. Retrieved from: https://wballiance.com/
+    - Source for: WiFi HaLow commercial deployment status, use cases
+
+14. **Morse Micro**. "Wi-Fi HaLow for IoT." Product documentation. Retrieved from: https://www.morsemicro.com/
+    - Source for: WiFi HaLow SoC specifications, range and throughput capabilities
+
 ### Indoor Positioning Context
 
-13. **Quuppa**. "Quuppa Intelligent Locating System." Technical overview. Retrieved from: https://www.quuppa.com/
+15. **Quuppa**. "Quuppa Intelligent Locating System." Technical overview. Retrieved from: https://www.quuppa.com/
     - Source for: Competitive comparison, antenna array-based RTLS architecture
 
-14. **Zebra Technologies**. "Real-Time Location Systems (RTLS)." Product documentation. Retrieved from: https://www.zebra.com/us/en/solutions/intelligent-edge-solutions/rtls.html
+16. **Zebra Technologies**. "Real-Time Location Systems (RTLS)." Product documentation. Retrieved from: https://www.zebra.com/us/en/solutions/intelligent-edge-solutions/rtls.html
     - Source for: Competitive comparison, enterprise RTLS market
 
 ### Standards
 
-15. **RTCM Special Committee 104**. "RTCM 10403.x - Differential GNSS Services, Version 3." Retrieved from: https://www.rtcm.org/publications
+17. **RTCM Special Committee 104**. "RTCM 10403.x - Differential GNSS Services, Version 3." Retrieved from: https://www.rtcm.org/publications
     - Source for: RTK corrections data format used by Polaris network
 
-16. **IEEE 802.15.4** (2020). "IEEE Standard for Low-Rate Wireless Networks." Retrieved from: https://en.wikipedia.org/wiki/IEEE_802.15.4
+18. **IEEE 802.15.4** (2020). "IEEE Standard for Low-Rate Wireless Networks." Retrieved from: https://en.wikipedia.org/wiki/IEEE_802.15.4
     - Source for: Thread PHY/MAC layer foundation
+
+19. **IEEE 802.11ah** (2017). "IEEE Standard for Sub-1 GHz License-Exempt Operation." 
+    - Source for: WiFi HaLow specification
 
 ---
 
 ## Glossary
 
 **AGV (Automated Guided Vehicle):** Self-driving material handling equipment used in warehouses and factories for transporting goods without human operators.
+
+**AprilTag:** A visual fiducial system using square black-and-white markers with encoded IDs. Designed for robust detection and precise pose estimation from camera images. Developed at University of Michigan.
 
 **Channel Sounding:** A Bluetooth 6.0 feature that measures distance between devices by analyzing signal characteristics across multiple frequency channels. Achieves 10-centimeter accuracy using phase-based ranging.
 
@@ -886,11 +1378,19 @@ The opportunity is significant: every P1 fleet customer is also a potential asse
 
 **Factor Graph:** A graphical model representing the relationships between variables and constraints. In positioning, nodes represent device positions and edges represent distance measurements, enabling globally consistent solutions.
 
+**Fiducial Marker:** A visual pattern placed in the environment that can be detected by cameras to provide position and orientation reference. Common types include AprilTags, ArUco markers, and QR codes.
+
 **IMU (Inertial Measurement Unit):** A sensor package containing accelerometers and gyroscopes that measure acceleration and rotation. Used for dead reckoning and sensor fusion in navigation systems.
+
+**Infrastructure Node:** A mains-powered device in the positioning mesh that aggregates data from multiple relay nodes using high-bandwidth WiFi HaLow connectivity and forwards to P1 gateways.
+
+**INS (Inertial Navigation System):** A navigation system that computes position by integrating acceleration and rotation measurements from an IMU, typically aided by external observations (GNSS, visual landmarks, radio ranging) to correct drift.
 
 **Innovation Gating:** An outlier rejection technique that discards measurements whose difference from the predicted value exceeds a statistical threshold based on expected uncertainty.
 
 **IPv6 (Internet Protocol version 6):** The latest version of the Internet Protocol, providing a vastly expanded address space that allows every device to have a unique, routable address.
+
+**Location as a Service (LaaS):** A subscription business model where customers pay for continuous, accurate position data rather than purchasing hardware and software separately. P1 provides the infrastructure, maintenance, and platform; customers consume location.
 
 **Mahalanobis Distance:** A statistical measure of distance that accounts for correlations and variances in the data. Used to determine whether a measurement is consistent with an expected distribution, enabling outlier detection.
 
@@ -901,6 +1401,8 @@ The opportunity is significant: every P1 fleet customer is also a potential asse
 **Particle Filter:** A Sequential Monte Carlo method that represents probability distributions using weighted samples (particles). Handles non-Gaussian noise and multimodal hypotheses better than Kalman filters.
 
 **Phase-Based Ranging (PBR):** A distance measurement technique that calculates range from the phase difference of signals transmitted across multiple frequencies.
+
+**Reference Node:** A combined fiducial marker and BLE beacon that participates in the self-locating mesh and provides visual landmarks for camera-equipped vehicles.
 
 **RSSI (Received Signal Strength Indicator):** A measurement of received signal power, commonly used for rough proximity estimation. Less accurate than Channel Sounding but simpler to implement.
 
@@ -916,13 +1418,17 @@ The opportunity is significant: every P1 fleet customer is also a potential asse
 
 **ULD (Unit Load Device):** A standardized container or pallet used for air cargo transport, designed to fit aircraft cargo holds efficiently.
 
+**Visual-Inertial Odometry (VIO):** A technique that fuses camera images and IMU data to estimate motion and position. Related to but distinct from full visual-inertial navigation with external landmark aiding.
+
+**WiFi HaLow (802.11ah):** A WiFi standard operating in sub-1 GHz frequencies, designed for IoT applications requiring longer range (up to 1km), better obstacle penetration, and support for thousands of devices per access point. Provides higher bandwidth than Thread while maintaining low power operation.
+
 **WMS (Warehouse Management System):** Software that controls and optimizes warehouse operations including inventory tracking, order fulfillment, and storage optimization.
 
 ---
 
 ## Appendix A: Mathematical Details
 
-This appendix provides the mathematical foundations for the sensor fusion algorithms described in Section 4.4.
+This appendix provides the mathematical foundations for the sensor fusion algorithms described in Section 4.4 and 4.6.
 
 ### A.1 Extended Kalman Filter Equations
 
@@ -1065,6 +1571,66 @@ Solve the resulting 2×2 linear system for (x, y).
 
 With more than three relays, use weighted least squares to find the position that minimizes total squared error, with weights inversely proportional to measurement uncertainty.
 
+### A.7 Visual Observation Model
+
+When a camera detects a fiducial marker, the observation provides bearing, elevation, and range information that can be fused with the vehicle's state estimate.
+
+**State Vector (Vehicle)**
+
+```
+x = [px, py, pz, vx, vy, vz, φ, θ, ψ, bax, bay, baz, bgx, bgy, bgz]ᵀ
+
+Where:
+  p = position (3D)
+  v = velocity (3D)
+  φ, θ, ψ = attitude (roll, pitch, yaw)
+  ba = accelerometer biases (3D)
+  bg = gyroscope biases (3D)
+```
+
+**Measurement Model**
+
+Given known fiducial position (Xf, Yf, Zf) and current vehicle state estimate:
+
+```
+Predicted bearing:    β̂ = atan2(Yf - py, Xf - px) - ψ
+Predicted elevation:  ε̂ = atan2(Zf - pz, √((Xf-px)² + (Yf-py)²))
+Predicted range:      r̂ = √((Xf-px)² + (Yf-py)² + (Zf-pz)²)
+```
+
+**Measurement Jacobian**
+
+The Jacobian H relates changes in state to changes in predicted measurement:
+
+```
+H = ∂h/∂x = [∂β̂/∂p, 0, ∂β̂/∂ψ, 0, 0;
+             ∂ε̂/∂p, 0, 0, 0, 0;
+             ∂r̂/∂p, 0, 0, 0, 0]
+```
+
+**Measurement Noise**
+
+```
+R_visual = diag(σ²_bearing, σ²_elevation, σ²_range)
+
+Typical values:
+  σ_bearing   = 0.5° = 0.0087 rad
+  σ_elevation = 0.5° = 0.0087 rad
+  σ_range     = 0.05 × range (5% of distance)
+```
+
+**Fusion with BLE CS**
+
+When both visual and BLE CS observations are available for the same reference node, they provide complementary information:
+
+```
+z_combined = [β_camera, ε_camera, r_camera, r_BLE]ᵀ
+
+R_combined = diag(σ²_β, σ²_ε, σ²_r_camera, σ²_r_BLE)
+```
+
+The BLE CS range typically has better accuracy than the camera-derived range (especially at distance), while the camera provides superior angular information.
+
 ---
 
 ## About the Author
@@ -1092,7 +1658,7 @@ Richard is a named inventor on 20 U.S. patents and has held DoD Top Secret/SCI c
 
 ---
 
-**Document Version:** 2.6
+**Document Version:** 2.7  
 **Date:** December 2025
 
 © 2025 Richard W. Lourette. All rights reserved.
