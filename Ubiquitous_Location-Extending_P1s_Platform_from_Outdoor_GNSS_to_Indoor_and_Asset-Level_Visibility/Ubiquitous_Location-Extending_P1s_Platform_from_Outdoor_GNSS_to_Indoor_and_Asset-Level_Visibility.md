@@ -855,7 +855,7 @@ flowchart TB
     end
     
     subgraph Infrastructure["Infrastructure Tier (Mains Powered)"]
-        GW["P1 Gateway<br/>Cellular/Ethernet"]
+        GW["P1 Gateway<br/>Cellular/Starlink/Ethernet"]
         INF1["Infrastructure Node<br/>WiFi HaLow"]
         INF2["Infrastructure Node<br/>WiFi HaLow"]
     end
@@ -899,7 +899,7 @@ flowchart TB
 | Asset tags | Coin cell | BLE 6.0 | ~1 Mbps burst | Lowest power; broadcast + CS reflector only |
 | Battery relays | AA/18650 | Thread | 250 kbps | Low power mesh; handles 10-20 nearby tags |
 | Infrastructure nodes | Mains | WiFi HaLow | 2-30 Mbps | Aggregates 50-100+ tags; needs bandwidth |
-| P1 Gateway | Mains | Cellular/Ethernet | 10+ Mbps | Cloud backhaul; existing P1 infrastructure |
+| P1 Gateway | Mains | Cellular/Starlink/Ethernet | 10+ Mbps | Cloud backhaul; existing P1 infrastructure |
 
 **WiFi HaLow (802.11ah) Benefits**
 
