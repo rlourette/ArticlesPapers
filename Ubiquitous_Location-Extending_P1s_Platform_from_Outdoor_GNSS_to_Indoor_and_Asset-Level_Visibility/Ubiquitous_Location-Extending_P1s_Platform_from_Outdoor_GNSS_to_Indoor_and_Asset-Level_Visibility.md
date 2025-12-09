@@ -21,7 +21,7 @@
 | 1.0 | December 2025 | R. Lourette | Initial draft: core architecture, BLE mesh concept |
 | 2.0 | December 2025 | R. Lourette | Added self-locating mesh, Kalman filtering, trilateration |
 | 2.1 | December 2025 | R. Lourette | Enhanced API integration, P1 Tags feature alignment |
-| 2.2 | December 2025 | R. Lourette | Published |
+| 2.2 | December 2025 | R. Lourette | Pushed to Github |
 | 2.5 | December 2025 | R. Lourette | Protocol coexistence (Eddystone-EID + Channel Sounding), tag portfolio strategy, mathematical appendix, glossary expansion |
 | 2.6 | December 2025 | R. Lourette | Autonomous mesh creation |
 | 2.7 | December 2025 | R. Lourette | Visual-inertial mesh localization (Section 4.6), unified fiducial/beacon reference nodes, P1 Positioning Engine integration, tiered communication architecture with WiFi HaLow, Location as a Service (LaaS) business model, zero-infrastructure deployment emphasis, OEM hardware/licensed software model |
