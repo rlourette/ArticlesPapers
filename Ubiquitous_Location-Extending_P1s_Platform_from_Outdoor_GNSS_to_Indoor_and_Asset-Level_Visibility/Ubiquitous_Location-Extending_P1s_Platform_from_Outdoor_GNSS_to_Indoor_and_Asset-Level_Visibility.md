@@ -223,7 +223,7 @@ flowchart LR
 | **Asset Beacon** | Transmits identity + ranging | BLE 6.0 | ~1 Mbps burst |
 | **Relay Node** | Edge aggregation | Thread | 250 kbps shared |
 | **Infrastructure Node** | High-bandwidth aggregation | WiFi HaLow | 2-30 Mbps |
-| **P1 Gateway** | Cloud backhaul + RTK anchor | Cellular/Ethernet | 10+ Mbps |
+| **P1 Gateway** | Cloud backhaul + RTK anchor | Cellular/Starlink/Ethernet | 10+ Mbps |
 | **Location Cloud** | Aggregates & serves | HTTPS/GraphQL | Unlimited |
 
 **Detection Event Payload:**
