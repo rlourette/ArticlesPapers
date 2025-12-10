@@ -25,13 +25,13 @@
 | 2.5 | December 2025 | R. Lourette | Protocol coexistence (Eddystone-EID + Channel Sounding), tag portfolio strategy, mathematical appendix, glossary expansion |
 | 2.6 | December 2025 | R. Lourette | Autonomous mesh creation |
 | 2.7 | December 2025 | R. Lourette | Visual-inertial mesh localization (Section 4.6), unified fiducial/beacon reference nodes, P1 Positioning Engine integration, tiered communication architecture with WiFi HaLow, Location as a Service (LaaS) business model, zero-infrastructure deployment emphasis, OEM hardware/licensed software model |
-| 2.8 | December 2025 | R. Lourette | Starlink backhaul option throughout, AprilTag 36h11 glossary expansion, minor consistency edits |
+| 2.8 | December 2025 | R. Lourette | Starlink backhaul option, glossary expansion |
 
 ---
 
 ## A Note on Terminology
 
-This paper proposes extending Point One Navigation's platform with physical asset tracking devices (BLE beacons attached to pallets, boxes, and containers). These should not be confused with P1's existing **Tags feature**, which is a powerful API capability for attaching customer metadata to P1 devices and querying them via GraphQL.
+This paper proposes extending Point One Navigation's platform with physical asset tracking devices (BLE (Bluetooth Low Energy) beacons attached to pallets, boxes, and containers). These should not be confused with P1's existing **Tags feature**, which is a powerful API capability for attaching customer metadata to P1 devices and querying them via GraphQL.
 
 Throughout this document:
 - **P1 Tags** refers to the existing metadata/device management feature
@@ -40,7 +40,7 @@ Throughout this document:
 - **Reference Nodes** refers to fiducial/beacon combinations that enable visual-inertial navigation
 - **Infrastructure Nodes** refers to mains-powered aggregation points with high-bandwidth backhaul
 
-This distinction matters: the P1 Tags feature becomes even more valuable when extended to manage tens of thousands of asset beacons alongside GNSS-enabled devices.
+This distinction matters: the P1 Tags feature becomes even more valuable when extended to manage tens of thousands of asset beacons alongside Global Navigation Satellite System (GNSS)-enabled devices.
 
 ---
 
@@ -80,7 +80,7 @@ Point One has solved outdoor precision location at scale:
 - 2,000+ professionally managed RTK base stations across North America, Europe, and Asia
 - Centimeter-level accuracy through the Polaris network
 - Single GraphQL API unifying corrections, telemetry, and device management
-- 10x growth in OEM adoption over the past year
+- 10x growth in Original Equipment Manufacturer (OEM) adoption over the past year
 - Proven deployments: 150,000+ vehicles from one EV manufacturer, 300,000 last-mile delivery vehicles
 
 ### 1.2 The Indoor Gap
@@ -1116,7 +1116,7 @@ Includes: Hardware lease, maintenance, software, support
 ```
 
 The LaaS model:
-- Lowers customer barrier to entry (no CapEx)
+- Lowers customer barrier to entry (no Capital Expenditure (CapEx))
 - Creates predictable recurring revenue for P1
 - Aligns incentives (P1 benefits from system reliability)
 - Enables technology refresh without customer repurchase
@@ -1192,7 +1192,7 @@ This model aligns P1's incentives with customer success: P1 earns recurring reve
 The LaaS model creates multiple barriers to displacement:
 
 1. **Infrastructure investment**: Customer has P1 hardware deployed throughout facility
-2. **Integration depth**: WMS/ERP connected via Location Cloud API
+2. **Integration depth**: Warehouse Management System (WMS)/Enterprise Resource Planning (ERP) connected via Location Cloud API
 3. **Data history**: Years of location analytics in P1 platform
 4. **Switching cost**: Would require parallel deployment during transition
 5. **Unified platform**: Competitors would need to match both outdoor RTK and indoor mesh
@@ -1365,6 +1365,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 
 **AprilTag:** A visual fiducial system using square black-and-white markers with encoded IDs. Designed for robust detection and precise pose estimation from camera images. Developed at University of Michigan. The "36h11" family (recommended for this application) uses a 6×6 data grid with 11-bit Hamming distance error correction, providing 587 unique tags with excellent detection reliability and minimal false positives.
 
+**ArUco:** A visual fiducial marker system similar to AprilTag, developed by the University of Córdoba. ArUco dictionaries provide predefined sets of markers optimized for different use cases—smaller dictionaries (e.g., 4×4_50) offer faster detection, while larger dictionaries (e.g., 6×6_250) provide more unique IDs and better error correction.
+
 **Channel Sounding:** A Bluetooth 6.0 feature that measures distance between devices by analyzing signal characteristics across multiple frequency channels. Achieves 10-centimeter accuracy using phase-based ranging.
 
 **Covariance Matrix:** A mathematical representation of uncertainty and correlations between estimated variables. In positioning, it quantifies how confident the system is about each coordinate and how errors in one dimension relate to errors in others.
@@ -1380,6 +1382,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 **Factor Graph:** A graphical model representing the relationships between variables and constraints. In positioning, nodes represent device positions and edges represent distance measurements, enabling globally consistent solutions.
 
 **Fiducial Marker:** A visual pattern placed in the environment that can be detected by cameras to provide position and orientation reference. Common types include AprilTags, ArUco markers, and QR codes.
+
+**GraphQL:** A query language and runtime for APIs developed by Facebook. Unlike REST APIs with fixed endpoints, GraphQL allows clients to request exactly the data they need in a single query. P1's Location Cloud uses GraphQL for device management, position queries, and real-time subscriptions.
 
 **IMU (Inertial Measurement Unit):** A sensor package containing accelerometers and gyroscopes that measure acceleration and rotation. Used for dead reckoning and sensor fusion in navigation systems.
 
@@ -1400,6 +1404,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 **NLOS (Non-Line-of-Sight):** A condition where the direct path between transmitter and receiver is obstructed, forcing signals to travel via reflections or diffraction. Degrades ranging accuracy.
 
 **Particle Filter:** A Sequential Monte Carlo method that represents probability distributions using weighted samples (particles). Handles non-Gaussian noise and multimodal hypotheses better than Kalman filters.
+
+**Polaris:** Point One Navigation's global RTK corrections network, delivering centimeter-accurate GNSS positioning via 2,000+ professionally managed base stations across North America, Europe, and Asia. Corrections are streamed to devices over cellular or internet connections.
 
 **Phase-Based Ranging (PBR):** A distance measurement technique that calculates range from the phase difference of signals transmitted across multiple frequencies.
 
@@ -1422,6 +1428,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 **Visual-Inertial Odometry (VIO):** A technique that fuses camera images and IMU data to estimate motion and position. Related to but distinct from full visual-inertial navigation with external landmark aiding.
 
 **WiFi HaLow (802.11ah):** A WiFi standard operating in sub-1 GHz frequencies, designed for IoT applications requiring longer range (up to 1km), better obstacle penetration, and support for thousands of devices per access point. Provides higher bandwidth than Thread while maintaining low power operation.
+
+**WPA3 (Wi-Fi Protected Access 3):** The latest WiFi security protocol, providing stronger encryption, protection against offline dictionary attacks, and simplified security for IoT devices. Required for enterprise-grade wireless deployments.
 
 **WMS (Warehouse Management System):** Software that controls and optimizes warehouse operations including inventory tracking, order fulfillment, and storage optimization.
 
@@ -1511,7 +1519,7 @@ Estimate: x̂ = Σᵢ w⁽ⁱ⁾ x⁽ⁱ⁾
 
 **Disadvantages:**
 - Computationally expensive (N = 100-1000 particles typical)
-- May require more memory than available on low-power relay MCUs
+- May require more memory than available on low-power relay Microcontroller Units (MCUs)
 
 ### A.4 Factor Graph Optimization
 
