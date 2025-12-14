@@ -6,11 +6,63 @@
   <em>Image credit: Richard Lourette and Grok</em>
 </p>
 
-**Version 2.8 | December 2025**
+**Version 2.9 | December 2025**
 
 **Author:** Richard W. Lourette  
 **Contact:** rlourette_at_gmail.com  
 **Location:** Fairport, New York, USA
+
+---
+
+## Table of Contents
+
+- [Revision History](#revision-history)
+- [A Note on Terminology](#a-note-on-terminology)
+- [Executive Summary](#executive-summary)
+- [1. The Ubiquitous Location Opportunity](#1-the-ubiquitous-location-opportunity)
+  - [1.1 P1's Current Strength](#11-p1s-current-strength)
+  - [1.2 The Indoor Gap](#12-the-indoor-gap)
+  - [1.3 The Asset Tracking Dimension](#13-the-asset-tracking-dimension)
+  - [1.4 The Deployment Friction Problem](#14-the-deployment-friction-problem)
+- [2. Proposed Architecture](#2-proposed-architecture)
+  - [2.1 System Components](#21-system-components)
+  - [2.2 Data Flow](#22-data-flow)
+  - [2.3 Why This Architecture](#23-why-this-architecture)
+- [3. Gateway Deployment Scenarios](#3-gateway-deployment-scenarios)
+  - [3.1 Fixed Infrastructure](#31-fixed-infrastructure)
+  - [3.2 Mobile Platforms](#32-mobile-platforms)
+  - [3.3 Temporary Deployments](#33-temporary-deployments)
+  - [3.4 Relay Node Position Anchoring via P1-Enabled Devices](#34-relay-node-position-anchoring-via-p1-enabled-devices)
+- [4. Enabling Technologies](#4-enabling-technologies)
+  - [4.1 Bluetooth 6.0 Channel Sounding](#41-bluetooth-60-channel-sounding)
+  - [4.2 Thread / Matter over Thread](#42-thread--matter-over-thread)
+  - [4.3 Eddystone-EID for Privacy and Security](#43-eddystone-eid-for-privacy-and-security)
+  - [4.4 Self-Locating Mesh Architecture](#44-self-locating-mesh-architecture)
+  - [4.5 Protocol Coexistence on Asset Tags](#45-protocol-coexistence-on-asset-tags)
+  - [4.6 Visual-Inertial Mesh Localization](#46-visual-inertial-mesh-localization)
+  - [4.7 Tiered Communication Architecture](#47-tiered-communication-architecture)
+  - [4.8 Visual Positioning System (VPS) Integration Pathway](#48-visual-positioning-system-vps-integration-pathway)
+- [5. Integration with P1's Platform](#5-integration-with-p1s-platform)
+  - [5.1 Location Cloud API Extensions](#51-location-cloud-api-extensions)
+  - [5.2 Leveraging P1 Tags for Asset Management](#52-leveraging-p1-tags-for-asset-management)
+  - [5.3 Unified Device Management](#53-unified-device-management)
+- [6. Business Model: Location as a Service](#6-business-model-location-as-a-service)
+  - [6.1 The LaaS Value Proposition](#61-the-laas-value-proposition)
+  - [6.2 Subscription Tiers](#62-subscription-tiers)
+  - [6.3 Revenue Composition](#63-revenue-composition)
+  - [6.4 Tag Portfolio Strategy](#64-tag-portfolio-strategy)
+  - [6.5 Hardware and Software Model](#65-hardware-and-software-model)
+  - [6.6 Competitive Moat](#66-competitive-moat)
+- [7. Competitive Positioning](#7-competitive-positioning)
+  - [7.1 vs. Pure Indoor Positioning](#71-vs-pure-indoor-positioning-quuppa-zebra-ubisense)
+  - [7.2 vs. BLE Asset Tracking](#72-vs-ble-asset-tracking-kontaktio-estimote-asset-tracker-vendors)
+  - [7.3 vs. Cellular IoT Trackers](#73-vs-cellular-iot-trackers-calamp-sierra-wireless)
+- [8. Implementation Roadmap](#8-implementation-roadmap)
+- [9. Conclusion](#9-conclusion)
+- [References](#references)
+- [Glossary](#glossary)
+- [Appendix A: Mathematical Details](#appendix-a-mathematical-details)
+- [About the Author](#about-the-author)
 
 ---
 
@@ -26,6 +78,7 @@
 | 2.6 | December 2025 | R. Lourette | Autonomous mesh creation |
 | 2.7 | December 2025 | R. Lourette | Visual-inertial mesh localization (Section 4.6), unified fiducial/beacon reference nodes, P1 Positioning Engine integration, tiered communication architecture with WiFi HaLow, Location as a Service (LaaS) business model, zero-infrastructure deployment emphasis, OEM hardware/licensed software model |
 | 2.8 | December 2025 | R. Lourette | Starlink backhaul option, glossary expansion |
+| 2.9 | December 2025 | R. Lourette | Visual Positioning System (VPS) integration pathway (Section 4.8), vendor landscape analysis (Dragonfly, Immersal, MultiSet AI), VPS-to-Positioning Engine architecture, Implementation Roadmap Phase 5, glossary expansion for VPS terminology |
 
 ---
 
@@ -39,6 +92,7 @@ Throughout this document:
 - **Relay Nodes** refers to battery-powered gateways that bridge asset beacons to P1's network
 - **Reference Nodes** refers to fiducial/beacon combinations that enable visual-inertial navigation
 - **Infrastructure Nodes** refers to mains-powered aggregation points with high-bandwidth backhaul
+- **VPS (Visual Positioning System)** refers to markerless camera-based localization technology (Section 4.8)
 
 This distinction matters: the P1 Tags feature becomes even more valuable when extended to manage tens of thousands of asset beacons alongside Global Navigation Satellite System (GNSS)-enabled devices.
 
@@ -56,6 +110,7 @@ This white paper proposes a practical path to indoor and asset-level tracking by
 - **Visual-inertial navigation** for forklifts and drones using camera observations of fiducial-equipped reference nodes
 - **Scalable deployment** supporting 100,000+ tracked assets per facility
 - **Location as a Service (LaaS)** revenue model with predictable recurring subscriptions
+- **VPS integration pathway** for markerless visual positioning as the technology matures
 
 **Key Innovations:**
 
@@ -67,7 +122,9 @@ This white paper proposes a practical path to indoor and asset-level tracking by
 
 4. **Tiered Communication Architecture:** Battery-powered relay nodes use Thread for low-power mesh networking, while mains-powered infrastructure nodes use WiFi HaLow (802.11ah) for high-bandwidth aggregation. This prevents Thread bandwidth saturation in large deployments while maintaining years of battery life for edge devices.
 
-This approach complements P1's roadmap rather than competing with it, providing near-term indoor coverage while P1 develops more sophisticated positioning technologies.
+5. **VPS Integration Pathway:** Section 4.8 outlines how markerless Visual Positioning Systems can extend P1's indoor capabilities beyond fiducial-based localization. By partnering with established VPS vendors (Dragonfly, Immersal), P1 can offer camera-based positioning that uses the environment itself as reference—no markers required. This capability feeds into the same Positioning Engine architecture, creating a unified platform spanning RTK outdoor, fiducial-based indoor, and VPS-enhanced indoor positioning.
+
+This approach complements P1's roadmap rather than competing with it, providing near-term indoor coverage while establishing a pathway to increasingly sophisticated positioning technologies.
 
 ---
 
@@ -94,6 +151,8 @@ Currently, P1's indoor capability is limited to short-term continuity: vehicles 
 - Assets transitioning between outdoor transport and indoor storage
 - Temporary or rapidly deployed facilities
 
+This paper proposes a phased approach to closing this gap: first with self-locating BLE mesh and fiducial-based visual-inertial navigation (Sections 4.1–4.7), then extending to markerless Visual Positioning Systems as the technology matures (Section 4.8).
+
 ### 1.3 The Asset Tracking Dimension
 
 Beyond indoor positioning, there's a parallel opportunity in **passive asset tracking**. P1's current customers (fleet operators, logistics companies, agricultural equipment manufacturers) don't just need to know where their vehicles are. They need to track what those vehicles carry:
@@ -115,7 +174,7 @@ This friction limits RTLS adoption to permanent, high-value installations. Tempo
 
 **P1's Unique Opportunity**
 
-P1 customers already operate fleets of equipment with centimeter-accurate RTK positioning: forklifts, tractors, AGVs, yard trucks. These vehicles continuously receive Polaris corrections and know their positions precisely. This paper proposes leveraging that existing infrastructure as a **distributed positioning network**.
+P1 customers already operate fleets of equipment with centimeter-accurate RTK positioning: forklifts in warehouses, tractors in agriculture, AGVs in manufacturing, yard trucks in logistics. These vehicles continuously receive Polaris corrections and know their positions precisely. This existing infrastructure becomes a **distributed positioning network**.
 
 The key insight: relay nodes can automatically derive their positions from nearby P1-enabled equipment using Bluetooth 6.0 Channel Sounding and sensor fusion algorithms. As P1 vehicles traverse the facility, they "donate" their positions to stationary relay nodes. The relay nodes then use trilateration to locate passive asset tags.
 
@@ -336,7 +395,7 @@ sequenceDiagram
 
 This approach transforms every P1-enabled vehicle into a mobile positioning anchor, extending RTK-grade accuracy from the vehicle to the assets around it. The technical details of position estimation, including Kalman filtering, trilateration, and self-locating mesh algorithms, are covered in Section 4.4.
 
-For deployments with camera-equipped vehicles (forklifts, drones, AGVs), reference nodes can include visual fiducial markers that provide an additional position observation source. See Section 4.6 for the visual-inertial architecture that leverages both radio and camera-based position updates.
+For deployments with camera-equipped vehicles (forklifts, drones, AGVs), reference nodes can include visual fiducial markers that provide an additional position observation source. See Section 4.6 for the visual-inertial architecture that leverages both radio and camera-based position updates. For future deployments where markers are impractical, Section 4.8 describes how markerless Visual Positioning Systems can provide similar capability using the environment itself as reference.
 
 ---
 
@@ -512,7 +571,7 @@ flowchart TB
 | **Facility modifications** | Conduit, cabling, network drops | None (wireless mesh) |
 | **External connectivity** | Per-anchor or controller | Single P1 gateway only |
 
-The self-locating mesh can be further enhanced when mobile platforms carry cameras. By integrating visual fiducial markers into reference nodes, vehicles gain an additional observation source for INS aiding. This visual-inertial approach is detailed in Section 4.6.
+The self-locating mesh can be further enhanced when mobile platforms carry cameras. By integrating visual fiducial markers into reference nodes, vehicles gain an additional observation source for INS aiding. This visual-inertial approach is detailed in Section 4.6. For environments where physical markers are impractical, Section 4.8 describes Visual Positioning System (VPS) technology that uses the environment itself as reference.
 
 ### 4.5 Protocol Coexistence on Asset Tags
 
@@ -929,6 +988,205 @@ A critical deployment advantage: **only the P1 gateway requires external network
 
 This architecture requires **zero facility modifications**: no conduit runs, no Ethernet drops, no IT infrastructure changes. Battery nodes mount with adhesive, magnets, or zip ties. Mains-powered nodes plug into existing outlets. The P1 gateway's cellular or Starlink option means even the backhaul connection requires no facility network integration.
 
+### 4.8 Visual Positioning System (VPS) Integration Pathway
+
+The visual-inertial architecture described in Section 4.6 uses fiducial markers as known landmarks for camera-based positioning. This approach is practical and deployable today, but represents an intermediate step toward a more powerful capability: **markerless Visual Positioning Systems (VPS)**.
+
+VPS technology uses deep learning to match camera imagery against pre-built 3D maps, enabling centimeter-level localization without requiring physical markers. As P1 expands indoor positioning capabilities, VPS integration represents a natural evolution that could significantly enhance the platform's value proposition.
+
+#### 4.8.1 VPS Technology Overview
+
+A Visual Positioning System determines device pose (position and orientation) by comparing live camera imagery against a database of learned visual features. Unlike fiducial-based systems, VPS uses the environment itself as the "marker"—walls, columns, equipment, architectural features—all become reference points.
+
+**Core VPS Pipeline:**
+
+```mermaid
+flowchart LR
+    subgraph Mapping["Offline: Map Creation"]
+        SCAN["Facility Scan<br/>(LiDAR, Camera, Point Cloud)"]
+        PROC["Feature Extraction<br/>(Neural Network)"]
+        MAP["3D Feature Map<br/>(Compressed)"]
+    end
+    
+    subgraph Runtime["Online: Localization"]
+        CAM["Device Camera<br/>(Live Frame)"]
+        FEAT["Feature Extraction"]
+        MATCH["Feature Matching"]
+        POSE["6-DoF Pose<br/>(Position + Orientation)"]
+    end
+    
+    SCAN --> PROC --> MAP
+    MAP --> MATCH
+    CAM --> FEAT --> MATCH --> POSE
+    
+    style Mapping fill:#e3f2fd,stroke:#1976d2
+    style Runtime fill:#e8f5e9,stroke:#43a047
+```
+
+**Why VPS Matters for P1:**
+
+| Capability | Fiducial-Based (Section 4.6) | VPS-Enhanced |
+|------------|------------------------------|--------------|
+| Marker installation | Required (100+ per facility) | None (uses existing environment) |
+| Deployment time | Hours (marker placement) | Minutes (map import) |
+| Coverage gaps | Areas without markers | Continuous throughout mapped space |
+| Maintenance | Replace damaged markers | Map refresh (automated) |
+| Works in new spaces | After marker deployment | After initial mapping scan |
+
+#### 4.8.2 VPS Vendor Landscape
+
+Several companies offer VPS technology that could integrate with P1's Positioning Engine:
+
+**Enterprise-Focused Solutions:**
+
+| Vendor | Strengths | P1 Integration Fit |
+|--------|-----------|-------------------|
+| **Dragonfly (Onit)** | Explicit Jetson/RPi support; ROS integration; warehouse focus; fully offline capable | **High** — Matches P1's embedded C/C++ architecture and industrial customers |
+| **Immersal (Hexagon)** | Mature platform; Magic Leap 2 support; on-device and cloud modes; REST API | **Medium-High** — Enterprise backing; flexible deployment; API-centric |
+| **MultiSet AI** | Scan-agnostic (accepts Matterport, NavVis, LiDAR); explicit GPS/UWB prior fusion; ROS 2 SDK | **Medium** — Architecture aligns well but company is early-stage (unfunded) |
+
+**Platform Players:**
+
+| Vendor | Coverage | P1 Relevance |
+|--------|----------|--------------|
+| **Niantic Spatial** | Massive outdoor coverage via Pokémon GO crowdsourcing; enterprise private spaces available | Gaming heritage; limited embedded support |
+| **Google ARCore Geospatial** | Street View-derived outdoor maps; indoor limited | Consumer mobile focus; cloud-dependent |
+
+**Recommendation:** For initial VPS integration, **Dragonfly** offers the strongest technical alignment with P1's architecture. Their explicit support for NVIDIA Jetson and Raspberry Pi, combined with ROS integration and warehouse-specific optimization, matches P1's customer base and embedded positioning engine approach. Immersal provides a mature fallback option with Hexagon's enterprise backing.
+
+#### 4.8.3 Integration Architecture
+
+VPS observations would feed into P1's Positioning Engine as an additional measurement source, analogous to how GNSS observations work outdoors:
+
+```mermaid
+flowchart LR
+    subgraph Sensors["Vehicle Sensors"]
+        IMU["IMU<br/>(100 Hz)"]
+        WHEEL["Wheel Odometry<br/>(50 Hz)"]
+        CAM["Camera<br/>(30 Hz)"]
+    end
+    
+    subgraph Aiding["Aiding Sources"]
+        RTK["P1 RTK<br/>(outdoor)"]
+        FID["Fiducial Detection<br/>(Section 4.6)"]
+        VPS["VPS Localization<br/>(proposed)"]
+        BLE["BLE CS Ranging<br/>(reference nodes)"]
+    end
+    
+    subgraph Engine["P1 Positioning Engine"]
+        EKF["Extended Kalman Filter<br/>Multi-Source Fusion"]
+    end
+    
+    subgraph Output["Output"]
+        POSE["Continuous 6-DoF Pose<br/>(indoor + outdoor)"]
+    end
+    
+    IMU --> EKF
+    WHEEL --> EKF
+    CAM --> FID
+    CAM --> VPS
+    RTK --> EKF
+    FID --> EKF
+    VPS --> EKF
+    BLE --> EKF
+    EKF --> POSE
+    
+    style Engine fill:#c8e6c9,stroke:#43a047,stroke-width:2px
+    style VPS fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+```
+
+**VPS Measurement Model:**
+
+The VPS system provides 6-DoF pose estimates with associated covariance:
+
+```
+z_VPS = [x, y, z, roll, pitch, yaw]ᵀ
+R_VPS = covariance matrix (from VPS confidence)
+```
+
+The Positioning Engine fuses VPS observations using standard Kalman update equations, weighting them against IMU propagation and other aiding sources based on reported uncertainty.
+
+**Graceful Degradation Hierarchy:**
+
+| Environment | Primary Aiding | Fallback 1 | Fallback 2 |
+|-------------|---------------|------------|------------|
+| Outdoor (sky view) | P1 RTK GNSS | — | IMU dead reckoning |
+| Transition zone | RTK → VPS handoff | Fiducials | IMU + wheel odometry |
+| Indoor (mapped) | VPS | Fiducials + BLE CS | IMU + wheel odometry |
+| Indoor (unmapped) | Fiducials + BLE CS | BLE CS only | IMU + wheel odometry |
+
+This hierarchy ensures continuous positioning even as individual aiding sources become unavailable.
+
+#### 4.8.4 Map Management Integration
+
+VPS requires facility maps: 3D reconstructions with learned visual features. The proposed architecture integrates map management with P1's existing Location Cloud:
+
+**Map Sources (Scan-Agnostic Approach):**
+
+| Source | Resolution | Typical Use |
+|--------|------------|-------------|
+| Matterport | High (point cloud + imagery) | Office, retail |
+| NavVis | Very high | Large industrial |
+| LiDAR point cloud | Variable | Existing survey data |
+| iPhone/iPad Pro LiDAR | Medium | Rapid capture |
+| Reference node self-mapping | Medium | Automatic from mesh operation |
+
+**Map Lifecycle:**
+
+```mermaid
+stateDiagram-v2
+    [*] --> Upload: Import scan data
+    Upload --> Processing: Location Cloud
+    Processing --> Active: Map published
+    Active --> Active: Vehicle observations refine
+    Active --> Stale: Environment changes detected
+    Stale --> Rescan: Operator notification
+    Rescan --> Processing: New scan data
+```
+
+The self-locating mesh architecture (Section 4.4) provides a unique advantage: as vehicles operate with both VPS and fiducial observation, their trajectories can be used to detect map staleness (when VPS confidence degrades) and automatically trigger rescan notifications.
+
+#### 4.8.5 Business Considerations
+
+**Build vs. Partner Analysis:**
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Partner (recommended)** | Faster to market; proven technology; focus on integration | Dependency on third party; revenue sharing |
+| **Build** | Full control; IP ownership | 2-3 year development; significant R&D investment; competitive risk |
+| **Acquire** | Immediate capability + team | High cost; integration risk |
+
+**Recommendation:** Partner with an established VPS vendor (Dragonfly or Immersal) for initial deployment. This allows P1 to offer VPS-enhanced positioning within 12-18 months while evaluating whether deeper integration or acquisition makes strategic sense.
+
+**Competitive Differentiation:**
+
+VPS integration would create significant competitive moat:
+
+1. **Unified platform**: No competitor offers RTK outdoor + self-locating mesh + VPS indoor in single API
+2. **Existing customer base**: 150,000+ vehicles already deployed become VPS-ready with software update
+3. **Map advantage**: Reference node mesh provides automatic map freshness monitoring
+4. **Sensor fusion expertise**: P1's Positioning Engine already handles multi-source fusion
+
+#### 4.8.6 Implementation Considerations
+
+**Technical Requirements:**
+
+| Component | Requirement | Notes |
+|-----------|-------------|-------|
+| Vehicle compute | ARM64 with NPU or Jetson-class GPU | VPS inference is compute-intensive |
+| Camera | 720p+ wide-angle, 30 fps | Higher resolution improves accuracy |
+| Map storage | 10-100 MB per 10,000 m² | Compressed feature maps |
+| Latency | <100ms localization | Real-time navigation requirement |
+
+**Risk Mitigation:**
+
+| Risk | Mitigation |
+|------|------------|
+| VPS vendor viability | Evaluate 2-3 vendors; prefer funded companies or corporate backing |
+| Compute cost increase | Tier VPS as premium feature; leverage existing camera hardware |
+| Map maintenance burden | Automate staleness detection via mesh cross-checks |
+| Customer adoption friction | Position as upgrade path, not replacement for fiducial system |
+
 ---
 
 ## 5. Integration with P1's Platform
@@ -1264,6 +1522,31 @@ Cellular trackers have higher per-device cost and power consumption:
 - Full documentation and developer resources
 - Location as a Service pricing and support tiers
 
+### Phase 5: Visual Positioning System Integration (2027-2028)
+
+Building on the visual-inertial foundation established in Phases 3-4, this phase integrates markerless Visual Positioning System technology:
+
+- VPS vendor partnership finalized (Dragonfly or Immersal recommended)
+- Positioning Engine VPS measurement interface
+- Map management integration with Location Cloud
+- Pilot deployments at high-value facilities
+- Production release with premium LaaS tier
+
+**Phase 5 Milestones:**
+
+| Milestone | Timeline | Deliverable |
+|-----------|----------|-------------|
+| Vendor evaluation | Q1 2027 | Technical assessment, partnership terms |
+| Integration prototype | Q2 2027 | VPS → Positioning Engine interface |
+| Pilot deployment | Q3-Q4 2027 | 3-5 customer facilities |
+| Production release | Q1 2028 | General availability |
+
+**Success Criteria:**
+- Sub-10cm accuracy in mapped indoor environments
+- <100ms localization latency
+- Seamless handoff between fiducial-based and VPS-based positioning
+- Map refresh workflow integrated with mesh staleness detection
+
 ---
 
 ## 9. Conclusion
@@ -1279,6 +1562,8 @@ The key insight is that P1 already has the hard parts solved:
 - P1 Positioning Engine for sensor fusion across diverse aiding sources
 
 Adding indoor mesh networking and asset beacon support extends these strengths into new markets. Polaris provides the geographic truth; the mesh network extends that truth indoors to every pallet, container, and asset.
+
+The architecture presented in Sections 4.1–4.7 is deployable today with available technology. Section 4.8 outlines how Visual Positioning Systems can further extend P1's indoor capabilities as that technology matures, creating a pathway from fiducial-based localization to fully markerless visual positioning. This phased approach allows P1 to capture market share immediately while establishing the foundation for increasingly sophisticated positioning technologies.
 
 The opportunity is significant: every P1 fleet customer is also a potential Location as a Service customer. Every pallet on every truck, every container in every warehouse, every package in transit, all manageable through a single platform, all anchored to Polaris-grade positioning.
 
@@ -1346,15 +1631,32 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 16. **Zebra Technologies**. "Real-Time Location Systems (RTLS)." Product documentation. Retrieved from: https://www.zebra.com/us/en/solutions/intelligent-edge-solutions/rtls.html
     - Source for: Competitive comparison, enterprise RTLS market
 
+### Visual Positioning System Sources
+
+17. **Dragonfly by Onit**. "Accurate indoor location and tracking with computer vision." Retrieved from: https://dragonflycv.com/
+    - Source for: Visual SLAM for warehouse/industrial applications, Jetson/RPi support, ROS integration, offline operation capability
+
+18. **Immersal (Hexagon)**. "Immersal SDK Documentation." Retrieved from: https://developers.immersal.com/docs/immersal-sdk/
+    - Source for: VPS SDK capabilities, on-device and cloud localization modes, REST API
+
+19. **MultiSet AI**. "Visual Positioning System with AI." Retrieved from: https://www.multiset.ai/
+    - Source for: Scan-agnostic VPS, GPS/UWB prior fusion, ROS 2 SDK, sub-6cm accuracy claims
+
+20. **Niantic Spatial**. "Visual Positioning System (VPS)." Retrieved from: https://lightship.dev/docs/ardk/features/lightship_vps/
+    - Source for: Lightship VPS architecture, enterprise private spaces capability
+
+21. **MultiSet AI** (July 2025). "MultiSet AI Earns 'Most Robust' Ranking in AREA's 2025 Enterprise Visual Positioning System Report." Press release. Retrieved from: https://www.xrom.in/post/multiset-ai-earns-most-robust-ranking-in-area-s-2025-enterprise-visual-positioning-system-report
+    - Source for: AREA VPS vendor comparison results, MultiSet "most robust" ranking
+
 ### Standards
 
-17. **RTCM Special Committee 104**. "RTCM 10403.x - Differential GNSS Services, Version 3." Retrieved from: https://www.rtcm.org/publications
+22. **RTCM Special Committee 104**. "RTCM 10403.x - Differential GNSS Services, Version 3." Retrieved from: https://www.rtcm.org/publications
     - Source for: RTK corrections data format used by Polaris network
 
-18. **IEEE 802.15.4** (2020). "IEEE Standard for Low-Rate Wireless Networks." Retrieved from: https://en.wikipedia.org/wiki/IEEE_802.15.4
+23. **IEEE 802.15.4** (2020). "IEEE Standard for Low-Rate Wireless Networks." Retrieved from: https://en.wikipedia.org/wiki/IEEE_802.15.4
     - Source for: Thread PHY/MAC layer foundation
 
-19. **IEEE 802.11ah** (2017). "IEEE Standard for Sub-1 GHz License-Exempt Operation." 
+24. **IEEE 802.11ah** (2017). "IEEE Standard for Sub-1 GHz License-Exempt Operation." 
     - Source for: WiFi HaLow specification
 
 ---
@@ -1381,6 +1683,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 
 **Factor Graph:** A graphical model representing the relationships between variables and constraints. In positioning, nodes represent device positions and edges represent distance measurements, enabling globally consistent solutions.
 
+**Feature Map (VPS):** A compressed representation of visual features extracted from a 3D scan of an environment. Used by Visual Positioning Systems to match live camera imagery against known locations.
+
 **Fiducial Marker:** A visual pattern placed in the environment that can be detected by cameras to provide position and orientation reference. Common types include AprilTags, ArUco markers, and QR codes.
 
 **GraphQL:** A query language and runtime for APIs developed by Facebook. Unlike REST APIs with fixed endpoints, GraphQL allows clients to request exactly the data they need in a single query. P1's Location Cloud uses GraphQL for device management, position queries, and real-time subscriptions.
@@ -1403,6 +1707,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 
 **NLOS (Non-Line-of-Sight):** A condition where the direct path between transmitter and receiver is obstructed, forcing signals to travel via reflections or diffraction. Degrades ranging accuracy.
 
+**NPU (Neural Processing Unit):** Specialized hardware accelerator optimized for neural network inference. Required for efficient on-device VPS operation.
+
 **Particle Filter:** A Sequential Monte Carlo method that represents probability distributions using weighted samples (particles). Handles non-Gaussian noise and multimodal hypotheses better than Kalman filters.
 
 **Polaris:** Point One Navigation's global RTK corrections network, delivering centimeter-accurate GNSS positioning via 2,000+ professionally managed base stations across North America, Europe, and Asia. Corrections are streamed to devices over cellular or internet connections.
@@ -1417,6 +1723,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 
 **RTLS (Real-Time Location System):** Infrastructure for automatically tracking the location of assets or personnel within a defined area, typically using radio frequency technologies.
 
+**Scan-Agnostic:** A VPS architecture that accepts 3D map data from multiple sources (Matterport, NavVis, LiDAR point clouds, etc.) rather than requiring proprietary scanning equipment.
+
 **Thread:** An IPv6-based mesh networking protocol designed for low-power IoT devices. Provides self-healing connectivity and supports devices that sleep most of the time to conserve battery.
 
 **Thread Border Router:** A device that bridges a Thread mesh network to external IP networks such as Wi-Fi or Ethernet, enabling Thread devices to communicate with the broader internet.
@@ -1426,6 +1734,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 **ULD (Unit Load Device):** A standardized container or pallet used for air cargo transport, designed to fit aircraft cargo holds efficiently.
 
 **Visual-Inertial Odometry (VIO):** A technique that fuses camera images and IMU data to estimate motion and position. Related to but distinct from full visual-inertial navigation with external landmark aiding.
+
+**Visual Positioning System (VPS):** A technology that determines device position and orientation by matching live camera imagery against a pre-built 3D map of visual features. Unlike fiducial-based systems, VPS uses the environment itself as reference, with no physical markers required.
 
 **WiFi HaLow (802.11ah):** A WiFi standard operating in sub-1 GHz frequencies, designed for IoT applications requiring longer range (up to 1km), better obstacle penetration, and support for thousands of devices per access point. Provides higher bandwidth than Thread while maintaining low power operation.
 
@@ -1437,14 +1747,14 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 
 ## Appendix A: Mathematical Details
 
-This appendix provides the mathematical foundations for the sensor fusion algorithms described in Section 4.4 and 4.6.
+This appendix provides the mathematical foundations for the sensor fusion algorithms described in Sections 4.4, 4.6, and 4.8.
 
 ### A.1 Extended Kalman Filter Equations
 
 The EKF maintains a state vector and covariance matrix:
 
 ```
-State Vector: x = [lat, lon, alt]ᵀ
+State Vector:      x = [lat, lon, alt]ᵀ
 Covariance Matrix: P (3×3 uncertainty estimate)
 ```
 
@@ -1590,11 +1900,11 @@ When a camera detects a fiducial marker, the observation provides bearing, eleva
 x = [px, py, pz, vx, vy, vz, φ, θ, ψ, bax, bay, baz, bgx, bgy, bgz]ᵀ
 
 Where:
-  p = position (3D)
-  v = velocity (3D)
+  p       = position (3D)
+  v       = velocity (3D)
   φ, θ, ψ = attitude (roll, pitch, yaw)
-  ba = accelerometer biases (3D)
-  bg = gyroscope biases (3D)
+  ba      = accelerometer biases (3D)
+  bg      = gyroscope biases (3D)
 ```
 
 **Measurement Model**
@@ -1640,6 +1950,39 @@ R_combined = diag(σ²_β, σ²_ε, σ²_r_camera, σ²_r_BLE)
 
 The BLE CS range typically has better accuracy than the camera-derived range (especially at distance), while the camera provides superior angular information.
 
+### A.8 VPS Measurement Model
+
+When a Visual Positioning System provides a pose estimate, it can be fused with the vehicle's state estimate using the same EKF framework:
+
+**VPS Observation**
+
+```
+z_VPS = [x, y, z, φ, θ, ψ]ᵀ (6-DoF pose)
+
+R_VPS = VPS-reported covariance matrix (6×6)
+```
+
+**Measurement Model**
+
+The VPS measurement is a direct observation of the state (position and orientation):
+
+```
+h(x) = [px, py, pz, φ, θ, ψ]ᵀ
+
+H_VPS = [I₃  0  0  0  0;    (position rows)
+         0   0  I₃ 0  0]    (orientation rows)
+```
+
+**Confidence-Based Weighting**
+
+VPS systems typically report a confidence score (0-1) or explicit covariance. When confidence is low (poor lighting, occluded features, map staleness):
+
+```
+R_VPS_adjusted = R_VPS_nominal / confidence²
+```
+
+This automatically down-weights unreliable VPS observations, allowing the filter to rely more heavily on IMU propagation and other aiding sources.
+
 ---
 
 ## About the Author
@@ -1667,7 +2010,7 @@ Richard is a named inventor on 20 U.S. patents and has held DoD Top Secret/SCI c
 
 ---
 
-**Document Version:** 2.8  
+**Document Version:** 2.9  
 **Date:** December 2025
 
 © 2025 Richard W. Lourette. All rights reserved.
