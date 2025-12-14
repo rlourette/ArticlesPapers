@@ -78,7 +78,7 @@
 | 2.6 | December 2025 | R. Lourette | Autonomous mesh creation |
 | 2.7 | December 2025 | R. Lourette | Visual-inertial mesh localization (Section 4.6), unified fiducial/beacon reference nodes, P1 Positioning Engine integration, tiered communication architecture with WiFi HaLow, Location as a Service (LaaS) business model, zero-infrastructure deployment emphasis, OEM hardware/licensed software model |
 | 2.8 | December 2025 | R. Lourette | Starlink backhaul option, glossary expansion |
-| 2.9 | December 2025 | R. Lourette | Visual Positioning System (VPS) integration pathway (Section 4.8), vendor landscape analysis (Dragonfly, Immersal, MultiSet AI), VPS-to-Positioning Engine architecture, Implementation Roadmap Phase 5, glossary expansion for VPS terminology |
+| 2.9 | December 2025 | R. Lourette | Visual Positioning System (VPS) integration pathway (Section 4.8), vendor landscape analysis (Dragonfly, Immersal, MultiSet AI), VPS-to-Positioning Engine architecture, on-premise security architecture ("your maps never leave your facility"), Implementation Roadmap Phase 5, glossary expansion for VPS terminology |
 
 ---
 
@@ -122,7 +122,7 @@ This white paper proposes a practical path to indoor and asset-level tracking by
 
 4. **Tiered Communication Architecture:** Battery-powered relay nodes use Thread for low-power mesh networking, while mains-powered infrastructure nodes use WiFi HaLow (802.11ah) for high-bandwidth aggregation. This prevents Thread bandwidth saturation in large deployments while maintaining years of battery life for edge devices.
 
-5. **VPS Integration Pathway:** Section 4.8 outlines how markerless Visual Positioning Systems can extend P1's indoor capabilities beyond fiducial-based localization. By partnering with established VPS vendors (Dragonfly, Immersal), P1 can offer camera-based positioning that uses the environment itself as reference—no markers required. This capability feeds into the same Positioning Engine architecture, creating a unified platform spanning RTK outdoor, fiducial-based indoor, and VPS-enhanced indoor positioning.
+5. **VPS Integration Pathway:** Section 4.8 outlines how markerless Visual Positioning Systems can extend P1's indoor capabilities beyond fiducial-based localization. By partnering with established VPS vendors (Dragonfly, Immersal), P1 can offer camera-based positioning that uses the environment itself as reference, with no markers required. Critically, the architecture ensures **facility maps never leave customer premises**: all map processing and localization runs on-site, enabling deployment in air-gapped and security-sensitive environments where cloud-dependent solutions are prohibited. This capability feeds into the same Positioning Engine architecture, creating a unified platform spanning RTK outdoor, fiducial-based indoor, and VPS-enhanced indoor positioning.
 
 This approach complements P1's roadmap rather than competing with it, providing near-term indoor coverage while establishing a pathway to increasingly sophisticated positioning technologies.
 
@@ -1035,24 +1035,24 @@ flowchart LR
 
 #### 4.8.2 VPS Vendor Landscape
 
-Several companies offer VPS technology that could integrate with P1's Positioning Engine:
+Several companies offer VPS technology that could integrate with P1's Positioning Engine. A critical evaluation criterion for P1's industrial customers: **the solution must support fully on-premise deployment with no cloud dependencies**. Facility maps contain sensitive operational intelligence and must never leave customer premises (see Section 4.8.5).
 
 **Enterprise-Focused Solutions:**
 
-| Vendor | Strengths | P1 Integration Fit |
-|--------|-----------|-------------------|
-| **Dragonfly (Onit)** | Explicit Jetson/RPi support; ROS integration; warehouse focus; fully offline capable | **High** — Matches P1's embedded C/C++ architecture and industrial customers |
-| **Immersal (Hexagon)** | Mature platform; Magic Leap 2 support; on-device and cloud modes; REST API | **Medium-High** — Enterprise backing; flexible deployment; API-centric |
-| **MultiSet AI** | Scan-agnostic (accepts Matterport, NavVis, LiDAR); explicit GPS/UWB prior fusion; ROS 2 SDK | **Medium** — Architecture aligns well but company is early-stage (unfunded) |
+| Vendor | Strengths | On-Premise/Air-Gap | P1 Integration Fit |
+|--------|-----------|-------------------|-------------------|
+| **Dragonfly (Onit)** | Explicit Jetson/RPi support; ROS integration; warehouse focus | ✓✓ Fully offline capable | **High** — Matches P1's embedded C/C++ architecture and industrial customers |
+| **Immersal (Hexagon)** | Mature platform; Magic Leap 2 support; on-device and cloud modes; REST API | ✓ On-device mode available | **Medium-High** — Enterprise backing; flexible deployment; API-centric |
+| **MultiSet AI** | Scan-agnostic (accepts Matterport, NavVis, LiDAR); explicit GPS/UWB prior fusion; ROS 2 SDK | ✓ On-prem option | **Medium** — Architecture aligns well but company is early-stage (unfunded) |
 
-**Platform Players:**
+**Platform Players (Not Recommended for Enterprise):**
 
-| Vendor | Coverage | P1 Relevance |
-|--------|----------|--------------|
-| **Niantic Spatial** | Massive outdoor coverage via Pokémon GO crowdsourcing; enterprise private spaces available | Gaming heritage; limited embedded support |
-| **Google ARCore Geospatial** | Street View-derived outdoor maps; indoor limited | Consumer mobile focus; cloud-dependent |
+| Vendor | Coverage | On-Premise | P1 Relevance |
+|--------|----------|------------|--------------|
+| **Niantic Spatial** | Massive outdoor coverage via Pokémon GO crowdsourcing | ✗ Cloud-dependent | Not suitable—gaming heritage; requires cloud; limited embedded support |
+| **Google ARCore Geospatial** | Street View-derived outdoor maps; indoor limited | ✗ Cloud-dependent | Not suitable—consumer mobile focus; maps uploaded to Google |
 
-**Recommendation:** For initial VPS integration, **Dragonfly** offers the strongest technical alignment with P1's architecture. Their explicit support for NVIDIA Jetson and Raspberry Pi, combined with ROS integration and warehouse-specific optimization, matches P1's customer base and embedded positioning engine approach. Immersal provides a mature fallback option with Hexagon's enterprise backing.
+**Recommendation:** For initial VPS integration, **Dragonfly** offers the strongest technical alignment with P1's architecture. Their explicit support for fully offline operation on NVIDIA Jetson and Raspberry Pi, combined with ROS integration and warehouse-specific optimization, matches both P1's technical requirements and customer security expectations. Immersal provides a mature fallback option with Hexagon's enterprise backing and on-device localization capability.
 
 #### 4.8.3 Integration Architecture
 
@@ -1119,7 +1119,7 @@ This hierarchy ensures continuous positioning even as individual aiding sources 
 
 #### 4.8.4 Map Management Integration
 
-VPS requires facility maps: 3D reconstructions with learned visual features. The proposed architecture integrates map management with P1's existing Location Cloud:
+VPS requires facility maps: 3D reconstructions with learned visual features. Critically, **all map data remains on customer premises** (see Section 4.8.5). P1's Location Cloud receives only position telemetry, never imagery or map data. The on-premise map management architecture supports multiple scan sources:
 
 **Map Sources (Scan-Agnostic Approach):**
 
@@ -1135,9 +1135,9 @@ VPS requires facility maps: 3D reconstructions with learned visual features. The
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Upload: Import scan data
-    Upload --> Processing: Location Cloud
-    Processing --> Active: Map published
+    [*] --> Capture: Scan facility
+    Capture --> Processing: On-premise server
+    Processing --> Active: Map distributed to vehicles
     Active --> Active: Vehicle observations refine
     Active --> Stale: Environment changes detected
     Stale --> Rescan: Operator notification
@@ -1146,7 +1146,111 @@ stateDiagram-v2
 
 The self-locating mesh architecture (Section 4.4) provides a unique advantage: as vehicles operate with both VPS and fiducial observation, their trajectories can be used to detect map staleness (when VPS confidence degrades) and automatically trigger rescan notifications.
 
-#### 4.8.5 Business Considerations
+#### 4.8.5 Security Architecture: Your Maps Never Leave Your Facility
+
+A critical requirement for P1's industrial and defense-adjacent customers: **facility maps must never be uploaded to external clouds**. Warehouses, manufacturing plants, and logistics centers contain proprietary layouts, equipment configurations, and operational patterns that represent sensitive competitive intelligence. Defense and government facilities have even stricter requirements.
+
+**The Security Problem with Cloud VPS**
+
+Consumer-focused VPS platforms (Niantic Lightship, Google ARCore Geospatial) rely on cloud-based map storage and localization. This model is unacceptable for enterprise customers because:
+
+- Facility layouts reveal operational capacity and workflow
+- Equipment positions expose automation investments
+- Temporal patterns (map updates) indicate business activity
+- Third-party cloud access creates compliance and audit risks
+- Air-gapped facilities cannot use cloud-dependent systems
+
+**P1's On-Premise VPS Architecture**
+
+The proposed VPS integration enforces a strict security boundary: **all map data and localization processing remain within the customer's facility**.
+
+```mermaid
+flowchart TB
+    subgraph Facility["Customer Facility (Air-Gapped OK)"]
+        subgraph Capture["Map Capture"]
+            SCAN["Scan Device<br/>(Matterport, LiDAR, iPhone)"]
+        end
+        
+        subgraph OnPrem["On-Premise Infrastructure"]
+            PROC["Map Processing<br/>(Customer Server)"]
+            STORE["Encrypted Map Storage<br/>(Customer NAS/Server)"]
+        end
+        
+        subgraph Vehicles["Vehicle Fleet"]
+            VEH1["Forklift 1<br/>Local VPS Engine"]
+            VEH2["AGV 2<br/>Local VPS Engine"]
+            VEH3["Drone 3<br/>Local VPS Engine"]
+        end
+        
+        subgraph Gateway["P1 Gateway"]
+            GW["Position Aggregation<br/>(Poses only, no maps)"]
+        end
+    end
+    
+    subgraph External["External (Optional)"]
+        P1Cloud["P1 Location Cloud<br/>(Receives positions only)"]
+    end
+    
+    SCAN --> PROC
+    PROC --> STORE
+    STORE -->|"Encrypted distribution"| VEH1
+    STORE -->|"Encrypted distribution"| VEH2
+    STORE -->|"Encrypted distribution"| VEH3
+    
+    VEH1 -->|"Position only"| GW
+    VEH2 -->|"Position only"| GW
+    VEH3 -->|"Position only"| GW
+    
+    GW -.->|"Positions only<br/>(no imagery, no maps)"| P1Cloud
+    
+    style Facility fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px
+    style External fill:#ffebee,stroke:#c62828,stroke-width:1px
+    style STORE fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+```
+
+**Security Guarantees:**
+
+| Data Type | Location | Leaves Facility? |
+|-----------|----------|------------------|
+| Raw scan imagery | Customer server | **Never** |
+| Processed feature maps | Customer server/NAS | **Never** |
+| Vehicle camera frames | Vehicle compute | **Never** |
+| VPS pose estimates | Vehicle → Gateway | Positions only (optional) |
+| Map encryption keys | Customer HSM/secure storage | **Never** |
+
+**Implementation Requirements:**
+
+1. **On-Device Localization**: VPS inference runs entirely on vehicle compute (Jetson, ARM64+NPU). No cloud round-trip for pose estimation.
+
+2. **Local Map Server**: Customer-hosted map distribution server on facility LAN. Maps encrypted at rest with customer-managed keys.
+
+3. **Air-Gap Compatible**: Full VPS functionality without any external network connectivity. P1 gateway backhaul is optional and carries only position telemetry.
+
+4. **Secure Map Distribution**: Maps distributed to vehicles via encrypted local network transfer. Vehicle stores encrypted map; decryption key derived from hardware attestation.
+
+5. **Audit Logging**: All map access logged locally for compliance. Customer controls retention and audit policies.
+
+**Vendor Selection Impact:**
+
+This security requirement strengthens the Dragonfly recommendation:
+
+| Vendor | On-Premise Capable | Air-Gap Support | Enterprise Security |
+|--------|-------------------|-----------------|---------------------|
+| **Dragonfly** | ✓✓ Full offline operation | ✓✓ Explicit | ✓ Industrial focus |
+| **Immersal** | ✓ On-device mode available | ✓ Possible | ✓ Enterprise tier |
+| **MultiSet AI** | ✓ On-prem deployment option | ? Unclear | ? Early stage |
+| **Niantic** | ✗ Cloud-dependent | ✗ No | ✗ Consumer focus |
+| **Google ARCore** | ✗ Cloud-dependent | ✗ No | ✗ Consumer focus |
+
+**Competitive Differentiation:**
+
+This security-first architecture becomes a major competitive advantage:
+
+> *"With P1's VPS integration, your facility maps never leave your premises. Unlike consumer VPS platforms that upload your environment to third-party clouds, P1 processes everything on-site. Your layouts, your equipment, your operations—they stay yours."*
+
+For customers in defense, pharmaceutical, semiconductor, and competitive manufacturing sectors, this isn't a feature—it's a requirement. P1 can serve markets that cloud-dependent VPS vendors cannot.
+
+#### 4.8.6 Business Considerations
 
 **Build vs. Partner Analysis:**
 
@@ -1167,7 +1271,7 @@ VPS integration would create significant competitive moat:
 3. **Map advantage**: Reference node mesh provides automatic map freshness monitoring
 4. **Sensor fusion expertise**: P1's Positioning Engine already handles multi-source fusion
 
-#### 4.8.6 Implementation Considerations
+#### 4.8.7 Implementation Considerations
 
 **Technical Requirements:**
 
@@ -1645,8 +1749,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 20. **Niantic Spatial**. "Visual Positioning System (VPS)." Retrieved from: https://lightship.dev/docs/ardk/features/lightship_vps/
     - Source for: Lightship VPS architecture, enterprise private spaces capability
 
-21. **MultiSet AI** (July 2025). "MultiSet AI Earns 'Most Robust' Ranking in AREA's 2025 Enterprise Visual Positioning System Report." Press release. Retrieved from: https://www.xrom.in/post/multiset-ai-earns-most-robust-ranking-in-area-s-2025-enterprise-visual-positioning-system-report
-    - Source for: AREA VPS vendor comparison results, MultiSet "most robust" ranking
+21. **AREA (Augmented Reality for Enterprise Alliance)** (June 2025). "Visual Positioning Systems for Enterprise AR Applications." 15th AREA Research Report. Retrieved from: https://thearea.org/a-visual-positioning-systems-for-enterprise-ar-applications-15th-research-report/
+    - Source for: VPS vendor comparison, MultiSet "most robust" ranking
 
 ### Standards
 
@@ -1664,6 +1768,8 @@ The opportunity is significant: every P1 fleet customer is also a potential Loca
 ## Glossary
 
 **AGV (Automated Guided Vehicle):** Self-driving material handling equipment used in warehouses and factories for transporting goods without human operators.
+
+**Air-Gapped:** A network security measure where a computer or network is physically isolated from unsecured networks, including the internet. Air-gapped facilities require all systems to operate without external connectivity, making cloud-dependent solutions unusable.
 
 **AprilTag:** A visual fiducial system using square black-and-white markers with encoded IDs. Designed for robust detection and precise pose estimation from camera images. Developed at University of Michigan. The "36h11" family (recommended for this application) uses a 6×6 data grid with 11-bit Hamming distance error correction, providing 587 unique tags with excellent detection reliability and minimal false positives.
 
