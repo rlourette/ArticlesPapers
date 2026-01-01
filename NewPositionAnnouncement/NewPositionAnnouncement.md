@@ -26,7 +26,7 @@ What excites me most about joining Point One Navigation is the opportunity to dr
 Point One Navigation's mission to enable "Physical AI" by delivering centimeter-accurate positioning everywhere resonates deeply with my belief that precision navigation should be accessible, reliable, and transformative. Their recent $35M Series C led by Khosla Ventures signals the industry's confidence in their unified platform approach, from satellite to software. I'm looking forward to contributing to their Positioning Engine and helping push the boundaries of what's possible when robots, autonomous vehicles, and precision equipment know exactly where they are.
 
 ### I want to give credit to my wonderful network here on LinkedIn.
-When you saw my **_"open to work"_** emblem, you steered a recruiter my way, and that made all the difference. Thank you!
+When you saw my **_"open to work"_** emblem, you steered the company my way, and that made all the difference. Thank you!
 
 ### Follow me to stay updated on Point One Navigation's growth and hiring opportunities.
 I'll be sharing insights as we expand our team and technology!
