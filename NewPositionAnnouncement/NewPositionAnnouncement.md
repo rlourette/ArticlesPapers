@@ -31,6 +31,4 @@ When you saw my **_"open to work"_** emblem, you steered a recruiter my way, and
 ### Follow me to stay updated on Point One Navigation's growth and hiring opportunities.
 I'll be sharing insights as we expand our team and technology!
 
-**P.S.** For those interested in consulting services through RL Tech Solutions, LLC: while I'll be fully engaged with Point One Navigation, I'm happy to provide referrals to other excellent consultants in the embedded systems and GNSS space in my network. Feel free to reach out if you need recommendations.
-
 #NewPosition #GNSS #RTK #EmbeddedSystems #Navigation #PointOneNavigation #AutonomousSystems #PhysicalAI #SensorFusion
