@@ -14,7 +14,7 @@ What excites me most about joining Point One Navigation is the opportunity to dr
 	<img src="processing.jpg" alt="Point One Architecture Diagram" width="90%"/>
 </p>
 
-- **GNSS Expertise**: "leveraging my decade-long GPS-III satellite program experience and recent advanced GPS receiver development to help advance their Polaris RTK network (1900+ global base stations) and new Virtual RTK technology
+- **GNSS Expertise**: Leveraging my decade-long GPS-III satellite program experience and recent advanced GPS receiver development to help advance their Polaris RTK network (1900+ global base stations) and new Virtual RTK technology
 <p align="center">
 	<img src="RTK.jpg" alt="Point One RTK Comparison" width="96%"/>
 </p>
