@@ -32,13 +32,13 @@ The implementation approach determines your achievable accuracy:
 
 ## Automotive Revolution: PTP over Automotive Ethernet
 
-The automotive industry's adoption of single-pair Ethernet (100BASE-T1/1000BASE-T1) combined with IEEE 802.1AS (gPTP) enables microsecond synchronization across dozens of sensors. When multiple sensors observe the same object, precise timestamps enable accurate sensor fusion. A 10-microsecond error at 120 km/h means 0.33mm position uncertainty—small individually, but potentially catastrophic when accumulated across sensors.
+The automotive industry's adoption of single-pair Ethernet (100BASE-T1/1000BASE-T1) combined with IEEE 802.1AS (gPTP) enables microsecond synchronization across dozens of sensors. When multiple sensors observe the same object, precise timestamps enable accurate sensor fusion. A 10-microsecond error at 120 km/h means 0.33mm position uncertainty, which is small individually but potentially catastrophic when accumulated across sensors.
 
 ## Autonomous Equipment in Action
 
 **Agriculture**: Fleets of tractors use RTK GNSS positioning with PTP synchronization to maintain centimeter-level formation accuracy at 15 km/h.
 
-**Mining**: 400-ton autonomous haul trucks coordinate through intersections without signals. A 100ms timing error could misplace a truck by 1.4 meters—the difference between safe passage and collision.
+**Mining**: 400-ton autonomous haul trucks coordinate through intersections without signals. A 100ms timing error could misplace a truck by 1.4 meters, which is the difference between safe passage and collision.
 
 **Aerospace**: Starship's distributed avionics synchronize engine control across redundant computers. Satellite constellations use PTP for seamless handoffs at 27,000 km/h orbital speeds.
 
@@ -48,7 +48,7 @@ The power grid uses PTP-synchronized PMUs sampling 60 times per second to detect
 
 ## Implementation Realities
 
-Success requires hardware timestamping PHYs and PTP-aware network infrastructure. GPS vulnerability demands robust holdover capabilities—high-stability oscillators can maintain accuracy for hours during outages. Consider timing architecture from day one; PTP isn't an add-on but foundational infrastructure.
+Success requires hardware timestamping PHYs and PTP-aware network infrastructure. GPS vulnerability demands robust holdover capabilities. High-stability oscillators can maintain accuracy for hours during outages. Consider timing architecture from day one; PTP isn't an add-on but foundational infrastructure.
 
 ## Looking Forward
 
